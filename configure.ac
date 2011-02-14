@@ -1,0 +1,21 @@
+AC_PREREQ([2.67])
+AC_INIT([colorizer], [1.0], [mbrush@leftclick.ca])
+AC_CONFIG_MACRO_DIR([m4])
+AM_INIT_AUTOMAKE([foreign -Wall])
+LT_INIT
+
+AC_PROG_CC
+AM_PROG_VALAC([0.7.0])
+
+AM_PROG_CC_C_O
+AC_PROG_INSTALL
+AC_PROG_LIBTOOL
+
+AM_PATH_GTK_2_0([2.10.0],,AC_MSG_ERROR([Gtk+ 2.10.0 or higher required.]))
+
+PKG_CHECK_MODULES([GEANY], [geany])
+AC_SUBST(GEANY_CFLAGS)
+AC_SUBST(GEANY_LIBS)
+
+AC_CONFIG_FILES([Makefile])
+AC_OUTPUT
