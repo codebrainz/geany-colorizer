@@ -27,31 +27,25 @@ public int plugin_version_check (int abi_version) {
 
 private static unowned Scintilla.Object? sci = null;
 private static ColorizerUI? ui;
-//private static Editor.Interface? iface = null;
 private static const int FACELIFT_INDIC=INDIC_MAX-1;
 
-private static int foreground_colors[33];
-private static int background_colors[33];
-private static bool fonts_bold[33];
-private static bool fonts_italic[33];
-private static bool fonts_underline[33];
-
-private static int[,,] theme_data;
-
-private static bool in_message_window = true;
+private static int[,,] theme_data; /* todo: make font into bitflags in single int */
 
 private static Gtk.MenuItem sep;
 private static Gtk.CheckMenuItem item;
-private static Gtk.Dialog? dialog = null;
 private static Gtk.ScrolledWindow? swin = null;
 
-private static bool colorizing = false;
-private static bool styling = false;
+private static bool colorizing = false;	/* whether the plugin is actively
+											  coloring documents in real-time */
+											  
+private static bool styling = false; /* whether the ui is being updated,
+											during which time, callbacks from
+											the ui should be ignored */
 
-private static string config_dir;
-private static string config_file;
-private static string theme_dir;
-private static string current_theme;
+private static string config_dir;	/* where the plugin can store config */
+private static string config_file;	/* the main config file */
+private static string theme_dir;		/* where the plugin can store themes */
+private static string current_theme;	/* the name of the active theme*/
 
 //------------------------------------------------------------------------------
 // Miscellaneous helper functions
@@ -85,6 +79,98 @@ private static string? lexer_language() {
 	return ret;
 }
 
+/* read the main configuration file to variables */
+public void init_config_file(string path)
+{
+	if (!FileUtils.test(path, FileTest.EXISTS)) {
+		KeyFile kf = new KeyFile();
+		try {
+			kf.set_string("general", "active_theme", "Default");
+			FileUtils.set_contents(path, kf.to_data(null));
+		}
+		catch (KeyFileError err) {
+			warning(err.message);
+		}
+		catch (FileError err) {
+			warning(err.message);
+		}
+	}
+	
+	KeyFile kf = new KeyFile();
+	try {
+		kf.load_from_file(path, KeyFileFlags.NONE);
+		
+		if (kf.has_key("general", "active_theme")) {
+			current_theme = kf.get_string("general", "active_theme");
+		}
+	}
+	catch (KeyFileError err) {
+		warning(err.message);
+	}	
+	catch (FileError err) {
+		warning(err.message);
+	}
+}
+
+/* save the current configuration to the main configuration file */
+public void save_config_file(string path) {
+	if (!FileUtils.test(path, FileTest.EXISTS)) {
+		KeyFile kf = new KeyFile();
+		try {
+			kf.set_string("general", "active_theme", current_theme);
+			FileUtils.set_contents(path, kf.to_data(null));
+		}
+		catch (KeyFileError err) {
+			warning(err.message);
+		}
+		catch (FileError err) {
+			warning(err.message);
+		}
+	}
+}
+
+/* create a directory if it doesn't exist already */
+public void create_dir(string path) 
+{
+	if (!FileUtils.test(path, FileTest.EXISTS))
+		DirUtils.create_with_parents(path, 0700);
+}
+
+/* write out all theme styles to file */
+public void save_theme()
+{
+	string theme_file_path = Path.build_path(Path.DIR_SEPARATOR_S, theme_dir, current_theme);
+			
+	for (int i=0; i < 100; i++) {
+		
+		KeyFile kf = new KeyFile();
+		try
+		{
+			string theme_lex_file = Path.build_path(Path.DIR_SEPARATOR_S, 
+														theme_file_path, 
+														"%d.conf".printf(i));
+			
+			for (int j=0; j < 33; j++) {
+				
+				kf.set_integer("%d".printf(j), "foreground", theme_data[i,j,0]);
+				kf.set_integer("%d".printf(j), "background", theme_data[i,j,1]);
+				kf.set_integer("%d".printf(j), "bold", theme_data[i,j,2]);
+				kf.set_integer("%d".printf(j), "italic", theme_data[i,j,3]);
+				kf.set_integer("%d".printf(j), "underline", theme_data[i,j,4]);
+				
+			}
+			
+			FileUtils.set_contents(theme_lex_file, kf.to_data(null));
+		}
+		catch (KeyFileError err) {
+			warning(err.message);
+		}
+		catch (FileError err) {
+			warning(err.message);
+		}
+	}
+}
+
 //----------------------------------------------------------------------
 // Callbacks
 
@@ -107,11 +193,11 @@ private void on_current_document_changed(GLib.Object ignored, Geany.Document doc
 									sci.send_message(Messages.GETCURRENTPOS));
 			
 			for (int i=0; i < 33; i++) {
-				foreground_colors[i] = (int)sci.send_message(Messages.STYLEGETFORE, i);
-				background_colors[i] = (int)sci.send_message(Messages.STYLEGETBACK, i);
-				fonts_bold[i] = (bool)sci.send_message(Messages.STYLEGETBOLD, i);
-				fonts_italic[i] = (bool)sci.send_message(Messages.STYLEGETITALIC, i);
-				fonts_underline[i] = (bool)sci.send_message(Messages.STYLEGETUNDERLINE, i);
+				theme_data[ui.current_lexer,i,0] = (int)sci.send_message(Messages.STYLEGETFORE, i);
+				theme_data[ui.current_lexer,i,1] = (int)sci.send_message(Messages.STYLEGETBACK, i);
+				theme_data[ui.current_lexer,i,2] = (int)sci.send_message(Messages.STYLEGETBOLD, i);
+				theme_data[ui.current_lexer,i,3] = (int)sci.send_message(Messages.STYLEGETITALIC, i);
+				theme_data[ui.current_lexer,i,4] = (int)sci.send_message(Messages.STYLEGETUNDERLINE, i);
 			}
 						
 			/* turn off the highlighting of active line */
@@ -126,7 +212,7 @@ private void on_current_document_changed(GLib.Object ignored, Geany.Document doc
 public bool colorize_editor()
 {
 	
-	if (have_text()) {
+	if (have_text() && !styling) {
 		
 		/* put an indicator under all words with the current style */
 		sci.send_message(Messages.INDICSETSTYLE, FACELIFT_INDIC, IndicatorStyles.TT);
@@ -142,12 +228,12 @@ public bool colorize_editor()
 		}	
 		
 		/* set all current styles, this is inefficient */
-		for (int i=0; i <= Styles.DEFAULT; i++) {
-			sci.send_message(Messages.STYLESETFORE, i, foreground_colors[i]);
-			sci.send_message(Messages.STYLESETBACK, i, background_colors[i]);
-			sci.send_message(Messages.STYLESETBOLD, i, (long)fonts_bold[i]);
-			sci.send_message(Messages.STYLESETITALIC, i, (long)fonts_italic[i]);
-			sci.send_message(Messages.STYLESETUNDERLINE, i, (long)fonts_underline[i]);
+		for (int i=0; i <= Styles.DEFAULT; i++) {			
+			sci.send_message(Messages.STYLESETFORE, i, theme_data[ui.current_lexer,i,0]);
+			sci.send_message(Messages.STYLESETBACK, i,theme_data[ui.current_lexer,i,1]);
+			sci.send_message(Messages.STYLESETBOLD, i, theme_data[ui.current_lexer,i,2]);
+			sci.send_message(Messages.STYLESETITALIC, i, theme_data[ui.current_lexer,i,3]);
+			sci.send_message(Messages.STYLESETUNDERLINE, i, theme_data[ui.current_lexer,i,4]);
 		}
 		
 	}
@@ -170,12 +256,12 @@ public void on_editor_notif(int param, Scintilla.Notification *notif)
 			colorize_editor();
 				
 			/* update the user interface */
-			styling = true;
-			ui.current_foreground_color = foreground_colors[ui.current_style];
-			ui.current_background_color = background_colors[ui.current_style];
-			ui.font_bold = fonts_bold[ui.current_style];
-			ui.font_italic = fonts_italic[ui.current_style];
-			ui.font_underline = fonts_underline[ui.current_style];
+			styling = true;			
+			ui.current_foreground_color =  theme_data[ui.current_lexer,ui.current_style,0];
+			ui.current_background_color =  theme_data[ui.current_lexer,ui.current_style,1];
+			ui.font_bold =  (bool)theme_data[ui.current_lexer,ui.current_style,2];
+			ui.font_italic =  (bool)theme_data[ui.current_lexer,ui.current_style,3];
+			ui.font_underline =  (bool)theme_data[ui.current_lexer,ui.current_style,4];
 			styling = false;
 			
 		}
@@ -187,7 +273,7 @@ public void on_editor_notif(int param, Scintilla.Notification *notif)
 private void on_fg_color_changed(int new_color)
 {
 	if (have_text() && !styling) {
-		foreground_colors[ui.current_style] = new_color;
+		theme_data[ui.current_lexer,ui.current_style,0] = new_color;
 		sci.send_message(Messages.STYLESETFORE, ui.current_style, new_color);
 	}
 }
@@ -196,12 +282,12 @@ private void on_bg_color_changed(int new_color)
 	if (have_text() && !styling) {
 		if (ui.use_common_background) {
 			for (int i=0; i <= Scintilla.Styles.DEFAULT; i++) {
-				background_colors[i] = new_color;
+				theme_data[ui.current_lexer,i,1] = new_color;
 				sci.send_message(Messages.STYLESETBACK, i, new_color);
 			}
 		}
 		else {
-			background_colors[ui.current_style] = new_color;
+			theme_data[ui.current_lexer,ui.current_style,1] = new_color;
 			sci.send_message(Messages.STYLESETBACK, ui.current_style, new_color);
 		}
 	}
@@ -210,7 +296,7 @@ private void on_bg_color_changed(int new_color)
 private void on_font_bold_toggled(bool font_bold)
 {
 	if (have_text() && !styling) {
-		fonts_bold[ui.current_style] = font_bold;
+		theme_data[ui.current_lexer,ui.current_style,2] = (int)font_bold;
 		sci.send_message(Messages.STYLESETBOLD, ui.current_style, (long)font_bold);
 	}
 }
@@ -218,7 +304,7 @@ private void on_font_bold_toggled(bool font_bold)
 private void on_font_italic_toggled(bool font_italic)
 {
 	if (have_text() && !styling) {
-		fonts_italic[ui.current_style] = font_italic;
+		theme_data[ui.current_lexer,ui.current_style,3] = (int)font_italic;
 		sci.send_message(Messages.STYLESETITALIC, ui.current_style, (long)font_italic);
 	}
 }
@@ -226,7 +312,7 @@ private void on_font_italic_toggled(bool font_italic)
 private void on_font_underline_toggled(bool font_underline)
 {
 	if (have_text() && !styling) {
-		fonts_underline[ui.current_style] = font_underline;
+		theme_data[ui.current_lexer,ui.current_style,4] = (int)font_underline;
 		sci.send_message(Messages.STYLESETUNDERLINE, ui.current_style, (long)font_underline);
 	}
 }
@@ -234,6 +320,11 @@ private void on_font_underline_toggled(bool font_underline)
 private void on_lexer_changed(int lexer)
 {
 	debug("Lexer changed to %d", lexer);
+}
+
+private void on_theme_changed(string theme_name) 
+{
+	current_theme = theme_name;
 }
 
 /* show/hide the dialog/notebook page */
@@ -251,111 +342,37 @@ public void on_open_toggled()
 	if (state) {
 		colorizing = true;
 		debug("Colorizing started");
-		if (in_message_window) {
-			swin.show_all();
-		}
-		else {
-			dialog.show();
-		}
+		swin.show_all();
 		on_current_document_changed(ui, Geany.Document.get_current());
 	}
 	else {
 		colorizing = false;
 		debug("Colorizing ended");
-		if (in_message_window) {
-			swin.hide();
-		}
-		else {
-			dialog.hide();
-		}
+		swin.hide();
 	}
 	
 }
 
-public bool on_dialog_delete() {
-	colorizing = false;
-	debug("Colorizing ended");
-	if (!in_message_window) {
-		dialog.hide();
-		item.set_active(false);
-		return true;
-	}	
-	return false;
-}
-
-public void on_dialog_response(int response_id) {
-	colorizing = false;
-	debug("Colorizing ended");
-	if (!in_message_window) {
-		dialog.hide();
-		item.set_active(false);
-	}
+public void on_theme_save_clicked()
+{
+	save_theme();
 }
 
 //----------------------------------------------------------------------
 // Plugin stuff
 
-public void init_config_file(string path)
-{
-	if (!FileUtils.test(path, FileTest.EXISTS)) {
-		KeyFile kf = new KeyFile();
-		try {
-			kf.set_string("general", "active_theme", "Default");
-			kf.set_boolean("general", "in_message_window", true);
-			FileUtils.set_contents(path, kf.to_data(null));
-		}
-		catch (KeyFileError err) {
-			warning(err.message);
-		}
-		catch (FileError err) {
-			warning(err.message);
-		}
-	}
-	
-	KeyFile kf = new KeyFile();
-	try {
-		kf.load_from_file(path, KeyFileFlags.NONE);
-		
-		if (kf.has_key("general", "active_theme")) {
-			current_theme = kf.get_string("general", "active_theme");
-			in_message_window = kf.get_boolean("general", "in_message_window");
-		}
-	}
-	catch (KeyFileError err) {
-		warning(err.message);
-	}	
-	catch (FileError err) {
-		warning(err.message);
-	}
-}
-
-public void save_config_file(string path) {
-	if (!FileUtils.test(path, FileTest.EXISTS)) {
-		KeyFile kf = new KeyFile();
-		try {
-			kf.set_string("general", "active_theme", current_theme);
-			kf.set_boolean("general", "in_message_window", in_message_window);
-			FileUtils.set_contents(path, kf.to_data(null));
-		}
-		catch (KeyFileError err) {
-			warning(err.message);
-		}
-		catch (FileError err) {
-			warning(err.message);
-		}
-	}
-}
-
-public void create_dir(string path) 
-{
-	if (!FileUtils.test(path, FileTest.EXISTS))
-		DirUtils.create_with_parents(path, 0700);
-}
-
-
 public void plugin_init (Geany.Data data)
 {
 	theme_data = new int[100,33,5];
+	for (int i=0; i < 100; i++) {
+		for (int j=0; j < 33; j++) {
+			theme_data[i,j,0] = 0x000000;
+			theme_data[i,j,1] = 0xffffff;
+			theme_data[i,j,2] = 0;
+			theme_data[i,j,3] = 0;
+			theme_data[i,j,4] = 0;
+		}
+	}
 	
 	config_dir = Path.build_path(Path.DIR_SEPARATOR_S, 
 									geany_data.app.configdir, 
@@ -399,32 +416,33 @@ public void plugin_init (Geany.Data data)
 	ui.font_italic_toggled.connect(on_font_italic_toggled);
 	ui.font_underline_toggled.connect(on_font_underline_toggled);
 	ui.lexer_changed.connect(on_lexer_changed);
+	ui.theme_changed.connect(on_theme_changed);
+	ui.theme_save_button_clicked.connect(on_theme_save_clicked);
 
-	if (in_message_window) {
+	swin = new Gtk.ScrolledWindow(null, null);
+	swin.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC);
+	swin.add_with_viewport(ui);
 	
-		swin = new Gtk.ScrolledWindow(null, null);
-		swin.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC);
-		swin.add_with_viewport(ui);
-		
-		Gtk.Notebook nb = data.main_widgets.message_window_notebook as Gtk.Notebook;
-		if (nb != null) {
-			nb.append_page(swin, new Gtk.Label("Colorizer"));
-			swin.hide();
-		}
+	Gtk.Notebook nb = data.main_widgets.message_window_notebook as Gtk.Notebook;
+	if (nb != null) {
+		nb.append_page(swin, new Gtk.Label("Colorizer"));
+		swin.hide();
 	}
-	else {
-		dialog = new Gtk.Dialog.with_buttons("Colorizer", 
-								(Gtk.Window)geany_data.main_widgets.window,
-								Gtk.DialogFlags.DESTROY_WITH_PARENT,
-								Gtk.STOCK_CLOSE,
-								Gtk.ResponseType.ACCEPT);
 		
-		dialog.delete_event.connect(on_dialog_delete);
-		dialog.response.connect(on_dialog_response);
-		
-		Gtk.Box box = (Gtk.Box)dialog.get_content_area();
-		box.pack_start(ui, true, true, 0);
-	}	
+	/* to put in separate window */
+	/*
+	dialog = new Gtk.Dialog.with_buttons("Colorizer", 
+							(Gtk.Window)geany_data.main_widgets.window,
+							Gtk.DialogFlags.DESTROY_WITH_PARENT,
+							Gtk.STOCK_CLOSE,
+							Gtk.ResponseType.ACCEPT);
+	
+	dialog.delete_event.connect(on_dialog_delete);
+	dialog.response.connect(on_dialog_response);
+	
+	Gtk.Box box = (Gtk.Box)dialog.get_content_area();
+	box.pack_start(ui, true, true, 0);
+	*/
 
 	Gtk.ComboBox cb = ui.combo_lexer;
 	for (int i=0; i < lexer_names.length; i++) {
@@ -469,10 +487,7 @@ public void plugin_cleanup ()
 	save_config_file(config_file);
 	sep.destroy();
 	item.destroy();
-	if (dialog != null)
-		dialog.destroy();
-	if (swin != null)
-		swin.destroy();
+	swin.destroy();
 }
 
 /* wrong!  some are missing in real list */

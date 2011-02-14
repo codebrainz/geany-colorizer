@@ -40,6 +40,7 @@ namespace Geany
 		public signal void font_italic_toggled(bool font_italic);
 		public signal void font_underline_toggled(bool font_italic);
 		public signal void theme_changed(string theme_name);
+		public signal void theme_save_button_clicked();
 		
 		private string[] _available_themes;
 		public string[] available_themes
@@ -267,11 +268,20 @@ namespace Geany
 			dlg.destroy();
 		}
 		
+		private void on_save_theme_clicked()
+		{
+			debug("Theme save button clicked");
+			theme_save_button_clicked();
+			
+		}
+		
 		public void connect_signals()
 		{
 			buttonNew.clicked.connect(on_new_theme_clicked);
 			buttonDelete.clicked.connect(on_delete_theme_clicked);
+			buttonSave.clicked.connect(on_save_theme_clicked);
 			treeThemes.row_activated.connect(on_tree_row_activated);
+			
 			
 			comboLexer.changed.connect(on_combo_lexer_changed);
 			comboStyle.changed.connect(on_combo_style_changed);

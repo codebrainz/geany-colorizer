@@ -98,9 +98,11 @@ static void geany_colorizer_ui_on_font_underline_toggled (GeanyColorizerUI* self
 static void geany_colorizer_ui_on_new_theme_clicked (GeanyColorizerUI* self);
 static void geany_colorizer_ui_load_themes (GeanyColorizerUI* self);
 static void geany_colorizer_ui_on_delete_theme_clicked (GeanyColorizerUI* self);
+static void geany_colorizer_ui_on_save_theme_clicked (GeanyColorizerUI* self);
 void geany_colorizer_ui_connect_signals (GeanyColorizerUI* self);
 static void _geany_colorizer_ui_on_new_theme_clicked_gtk_button_clicked (GtkButton* _sender, gpointer self);
 static void _geany_colorizer_ui_on_delete_theme_clicked_gtk_button_clicked (GtkButton* _sender, gpointer self);
+static void _geany_colorizer_ui_on_save_theme_clicked_gtk_button_clicked (GtkButton* _sender, gpointer self);
 static void _geany_colorizer_ui_on_tree_row_activated_gtk_tree_view_row_activated (GtkTreeView* _sender, GtkTreePath* path, GtkTreeViewColumn* column, gpointer self);
 static void _geany_colorizer_ui_on_combo_lexer_changed_gtk_combo_box_changed (GtkComboBox* _sender, gpointer self);
 static void _geany_colorizer_ui_on_combo_style_changed_gtk_combo_box_changed (GtkComboBox* _sender, gpointer self);
@@ -277,6 +279,13 @@ static void geany_colorizer_ui_on_delete_theme_clicked (GeanyColorizerUI* self) 
 }
 
 
+static void geany_colorizer_ui_on_save_theme_clicked (GeanyColorizerUI* self) {
+	g_return_if_fail (self != NULL);
+	g_debug ("colorizerui.vala:273: Theme save button clicked");
+	g_signal_emit_by_name (self, "theme-save-button-clicked");
+}
+
+
 static void _geany_colorizer_ui_on_new_theme_clicked_gtk_button_clicked (GtkButton* _sender, gpointer self) {
 	geany_colorizer_ui_on_new_theme_clicked (self);
 }
@@ -284,6 +293,11 @@ static void _geany_colorizer_ui_on_new_theme_clicked_gtk_button_clicked (GtkButt
 
 static void _geany_colorizer_ui_on_delete_theme_clicked_gtk_button_clicked (GtkButton* _sender, gpointer self) {
 	geany_colorizer_ui_on_delete_theme_clicked (self);
+}
+
+
+static void _geany_colorizer_ui_on_save_theme_clicked_gtk_button_clicked (GtkButton* _sender, gpointer self) {
+	geany_colorizer_ui_on_save_theme_clicked (self);
 }
 
 
@@ -341,6 +355,7 @@ void geany_colorizer_ui_connect_signals (GeanyColorizerUI* self) {
 	g_return_if_fail (self != NULL);
 	g_signal_connect_object (self->priv->buttonNew, "clicked", (GCallback) _geany_colorizer_ui_on_new_theme_clicked_gtk_button_clicked, self, 0);
 	g_signal_connect_object (self->priv->buttonDelete, "clicked", (GCallback) _geany_colorizer_ui_on_delete_theme_clicked_gtk_button_clicked, self, 0);
+	g_signal_connect_object (self->priv->buttonSave, "clicked", (GCallback) _geany_colorizer_ui_on_save_theme_clicked_gtk_button_clicked, self, 0);
 	g_signal_connect_object (self->priv->treeThemes, "row-activated", (GCallback) _geany_colorizer_ui_on_tree_row_activated_gtk_tree_view_row_activated, self, 0);
 	g_signal_connect_object (self->priv->comboLexer, "changed", (GCallback) _geany_colorizer_ui_on_combo_lexer_changed_gtk_combo_box_changed, self, 0);
 	g_signal_connect_object (self->priv->comboStyle, "changed", (GCallback) _geany_colorizer_ui_on_combo_style_changed_gtk_combo_box_changed, self, 0);
@@ -803,6 +818,7 @@ static void geany_colorizer_ui_class_init (GeanyColorizerUIClass * klass) {
 	g_signal_new ("font_italic_toggled", GEANY_TYPE_COLORIZER_UI, G_SIGNAL_RUN_LAST, 0, NULL, NULL, g_cclosure_marshal_VOID__BOOLEAN, G_TYPE_NONE, 1, G_TYPE_BOOLEAN);
 	g_signal_new ("font_underline_toggled", GEANY_TYPE_COLORIZER_UI, G_SIGNAL_RUN_LAST, 0, NULL, NULL, g_cclosure_marshal_VOID__BOOLEAN, G_TYPE_NONE, 1, G_TYPE_BOOLEAN);
 	g_signal_new ("theme_changed", GEANY_TYPE_COLORIZER_UI, G_SIGNAL_RUN_LAST, 0, NULL, NULL, g_cclosure_marshal_VOID__STRING, G_TYPE_NONE, 1, G_TYPE_STRING);
+	g_signal_new ("theme_save_button_clicked", GEANY_TYPE_COLORIZER_UI, G_SIGNAL_RUN_LAST, 0, NULL, NULL, g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 0);
 }
 
 
