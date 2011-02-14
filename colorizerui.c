@@ -5,10 +5,11 @@
 #include <glib.h>
 #include <glib-object.h>
 #include <gtk/gtk.h>
+#include <stdlib.h>
+#include <string.h>
 #include <gdk/gdk.h>
 #include <float.h>
 #include <math.h>
-#include <string.h>
 
 
 #define GEANY_TYPE_COLORIZER_UI (geany_colorizer_ui_get_type ())
@@ -21,11 +22,14 @@
 typedef struct _GeanyColorizerUI GeanyColorizerUI;
 typedef struct _GeanyColorizerUIClass GeanyColorizerUIClass;
 typedef struct _GeanyColorizerUIPrivate GeanyColorizerUIPrivate;
+#define _g_free0(var) (var = (g_free (var), NULL))
 #define _g_object_unref0(var) ((var == NULL) ? NULL : (var = (g_object_unref (var), NULL)))
+#define _g_dir_close0(var) ((var == NULL) ? NULL : (var = (g_dir_close (var), NULL)))
 
 struct _GeanyColorizerUI {
 	GtkVBox parent_instance;
 	GeanyColorizerUIPrivate * priv;
+	char* theme_dir;
 };
 
 struct _GeanyColorizerUIClass {
@@ -33,6 +37,7 @@ struct _GeanyColorizerUIClass {
 };
 
 struct _GeanyColorizerUIPrivate {
+	GtkListStore* theme_model;
 	GtkComboBox* comboLexer;
 	GtkComboBox* comboStyle;
 	GtkNotebook* notebookMain;
@@ -47,6 +52,12 @@ struct _GeanyColorizerUIPrivate {
 	GtkButton* buttonSave;
 	GtkButton* buttonOpen;
 	GtkButton* buttonDelete;
+	char** _available_themes;
+	gint _available_themes_length1;
+	gint __available_themes_size_;
+	char* _current_theme;
+	gint _last_lexer;
+	gint _last_style;
 };
 
 
@@ -56,6 +67,8 @@ GType geany_colorizer_ui_get_type (void) G_GNUC_CONST;
 #define GEANY_COLORIZER_UI_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), GEANY_TYPE_COLORIZER_UI, GeanyColorizerUIPrivate))
 enum  {
 	GEANY_COLORIZER_UI_DUMMY_PROPERTY,
+	GEANY_COLORIZER_UI_AVAILABLE_THEMES,
+	GEANY_COLORIZER_UI_CURRENT_THEME,
 	GEANY_COLORIZER_UI_COMBO_LEXER,
 	GEANY_COLORIZER_UI_COMBO_STYLE,
 	GEANY_COLORIZER_UI_CURRENT_LEXER,
@@ -67,8 +80,10 @@ enum  {
 	GEANY_COLORIZER_UI_FONT_UNDERLINE,
 	GEANY_COLORIZER_UI_USE_COMMON_BACKGROUND
 };
-GeanyColorizerUI* geany_colorizer_ui_new (void);
-GeanyColorizerUI* geany_colorizer_ui_construct (GType object_type);
+static void geany_colorizer_ui_on_tree_row_activated (GeanyColorizerUI* self, GtkTreePath* path, GtkTreeViewColumn* column);
+const char* geany_colorizer_ui_get_current_theme (GeanyColorizerUI* self);
+GeanyColorizerUI* geany_colorizer_ui_new (const char* themedir);
+GeanyColorizerUI* geany_colorizer_ui_construct (GType object_type, const char* themedir);
 void geany_colorizer_ui_init_ui (GeanyColorizerUI* self);
 static void geany_colorizer_ui_on_combo_lexer_changed (GeanyColorizerUI* self);
 static void geany_colorizer_ui_on_combo_style_changed (GeanyColorizerUI* self);
@@ -80,7 +95,13 @@ static void geany_colorizer_ui_on_use_common_bg_color_toggled (GeanyColorizerUI*
 static void geany_colorizer_ui_on_font_bold_toggled (GeanyColorizerUI* self);
 static void geany_colorizer_ui_on_font_italic_toggled (GeanyColorizerUI* self);
 static void geany_colorizer_ui_on_font_underline_toggled (GeanyColorizerUI* self);
+static void geany_colorizer_ui_on_new_theme_clicked (GeanyColorizerUI* self);
+static void geany_colorizer_ui_load_themes (GeanyColorizerUI* self);
+static void geany_colorizer_ui_on_delete_theme_clicked (GeanyColorizerUI* self);
 void geany_colorizer_ui_connect_signals (GeanyColorizerUI* self);
+static void _geany_colorizer_ui_on_new_theme_clicked_gtk_button_clicked (GtkButton* _sender, gpointer self);
+static void _geany_colorizer_ui_on_delete_theme_clicked_gtk_button_clicked (GtkButton* _sender, gpointer self);
+static void _geany_colorizer_ui_on_tree_row_activated_gtk_tree_view_row_activated (GtkTreeView* _sender, GtkTreePath* path, GtkTreeViewColumn* column, gpointer self);
 static void _geany_colorizer_ui_on_combo_lexer_changed_gtk_combo_box_changed (GtkComboBox* _sender, gpointer self);
 static void _geany_colorizer_ui_on_combo_style_changed_gtk_combo_box_changed (GtkComboBox* _sender, gpointer self);
 static void _geany_colorizer_ui_on_notebook_page_switched_gtk_notebook_switch_page (GtkNotebook* _sender, GtkNotebookPage* page, guint page_num, gpointer self);
@@ -90,8 +111,10 @@ static void _geany_colorizer_ui_on_use_common_bg_color_toggled_gtk_toggle_button
 static void _geany_colorizer_ui_on_font_bold_toggled_gtk_toggle_button_toggled (GtkToggleButton* _sender, gpointer self);
 static void _geany_colorizer_ui_on_font_italic_toggled_gtk_toggle_button_toggled (GtkToggleButton* _sender, gpointer self);
 static void _geany_colorizer_ui_on_font_underline_toggled_gtk_toggle_button_toggled (GtkToggleButton* _sender, gpointer self);
+char** geany_colorizer_ui_get_available_themes (GeanyColorizerUI* self, int* result_length1);
 static double geany_colorizer_ui_scale_round (double val, double factor);
 void geany_colorizer_ui_color_from_int (gint color, GdkColor* result);
+static void _vala_array_add1 (char*** array, int* length, int* size, char* value);
 GtkComboBox* geany_colorizer_ui_get_combo_lexer (GeanyColorizerUI* self);
 GtkComboBox* geany_colorizer_ui_get_combo_style (GeanyColorizerUI* self);
 gint geany_colorizer_ui_get_current_lexer (GeanyColorizerUI* self);
@@ -113,31 +136,52 @@ void geany_colorizer_ui_set_use_common_background (GeanyColorizerUI* self, gbool
 static void geany_colorizer_ui_finalize (GObject* obj);
 static void geany_colorizer_ui_get_property (GObject * object, guint property_id, GValue * value, GParamSpec * pspec);
 static void geany_colorizer_ui_set_property (GObject * object, guint property_id, const GValue * value, GParamSpec * pspec);
+static void _vala_array_destroy (gpointer array, gint array_length, GDestroyNotify destroy_func);
+static void _vala_array_free (gpointer array, gint array_length, GDestroyNotify destroy_func);
 
 
 
-GeanyColorizerUI* geany_colorizer_ui_construct (GType object_type) {
+static void geany_colorizer_ui_on_tree_row_activated (GeanyColorizerUI* self, GtkTreePath* path, GtkTreeViewColumn* column) {
+	g_return_if_fail (self != NULL);
+	g_return_if_fail (path != NULL);
+	g_return_if_fail (column != NULL);
+	g_signal_emit_by_name (self, "theme-changed", geany_colorizer_ui_get_current_theme (self));
+}
+
+
+GeanyColorizerUI* geany_colorizer_ui_construct (GType object_type, const char* themedir) {
 	GeanyColorizerUI * self;
+	char* _tmp0_;
+	g_return_val_if_fail (themedir != NULL, NULL);
 	self = g_object_newv (object_type, 0, NULL);
+	self->theme_dir = (_tmp0_ = g_strdup (themedir), _g_free0 (self->theme_dir), _tmp0_);
+	self->priv->_last_lexer = 1;
+	self->priv->_last_style = 0;
 	geany_colorizer_ui_init_ui (self);
 	return self;
 }
 
 
-GeanyColorizerUI* geany_colorizer_ui_new (void) {
-	return geany_colorizer_ui_construct (GEANY_TYPE_COLORIZER_UI);
+GeanyColorizerUI* geany_colorizer_ui_new (const char* themedir) {
+	return geany_colorizer_ui_construct (GEANY_TYPE_COLORIZER_UI, themedir);
 }
 
 
 static void geany_colorizer_ui_on_combo_lexer_changed (GeanyColorizerUI* self) {
 	g_return_if_fail (self != NULL);
-	g_signal_emit_by_name (self, "lexer-changed", gtk_combo_box_get_active (self->priv->comboLexer));
+	if (gtk_combo_box_get_active (self->priv->comboLexer) != self->priv->_last_lexer) {
+		g_signal_emit_by_name (self, "lexer-changed", gtk_combo_box_get_active (self->priv->comboLexer));
+		self->priv->_last_lexer = gtk_combo_box_get_active (self->priv->comboLexer);
+	}
 }
 
 
 static void geany_colorizer_ui_on_combo_style_changed (GeanyColorizerUI* self) {
 	g_return_if_fail (self != NULL);
-	g_signal_emit_by_name (self, "style-changed", gtk_combo_box_get_active (self->priv->comboStyle));
+	if (gtk_combo_box_get_active (self->priv->comboStyle) != self->priv->_last_style) {
+		g_signal_emit_by_name (self, "style-changed", gtk_combo_box_get_active (self->priv->comboStyle));
+		self->priv->_last_style = gtk_combo_box_get_active (self->priv->comboStyle);
+	}
 }
 
 
@@ -188,6 +232,66 @@ static void geany_colorizer_ui_on_font_underline_toggled (GeanyColorizerUI* self
 }
 
 
+static void geany_colorizer_ui_on_new_theme_clicked (GeanyColorizerUI* self) {
+	GtkDialog* dlg;
+	GtkEntry* ent;
+	g_return_if_fail (self != NULL);
+	dlg = g_object_ref_sink ((GtkDialog*) gtk_dialog_new_with_buttons ("New Theme", NULL, GTK_DIALOG_MODAL, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL));
+	ent = g_object_ref_sink ((GtkEntry*) gtk_entry_new ());
+	gtk_box_pack_start ((GtkBox*) dlg->vbox, (GtkWidget*) ent, TRUE, TRUE, (guint) 0);
+	gtk_widget_show ((GtkWidget*) ent);
+	if (gtk_dialog_run (dlg) == GTK_RESPONSE_ACCEPT) {
+		char* new_dir;
+		new_dir = g_build_path (G_DIR_SEPARATOR_S, self->theme_dir, gtk_entry_get_text (ent), NULL);
+		g_mkdir_with_parents (new_dir, 0700);
+		geany_colorizer_ui_load_themes (self);
+		_g_free0 (new_dir);
+	}
+	gtk_object_destroy ((GtkObject*) dlg);
+	_g_object_unref0 (ent);
+	_g_object_unref0 (dlg);
+}
+
+
+static void geany_colorizer_ui_on_delete_theme_clicked (GeanyColorizerUI* self) {
+	GtkMessageDialog* dlg;
+	GtkResponseType res;
+	gboolean _tmp0_ = FALSE;
+	g_return_if_fail (self != NULL);
+	dlg = g_object_ref_sink ((GtkMessageDialog*) gtk_message_dialog_new (NULL, GTK_DIALOG_MODAL, GTK_MESSAGE_QUESTION, GTK_BUTTONS_YES_NO, "Are you sure you want to delete the theme '%s'?", geany_colorizer_ui_get_current_theme (self)));
+	res = (GtkResponseType) gtk_dialog_run ((GtkDialog*) dlg);
+	if (res == GTK_RESPONSE_YES) {
+		_tmp0_ = TRUE;
+	} else {
+		_tmp0_ = res == GTK_RESPONSE_ACCEPT;
+	}
+	if (_tmp0_) {
+		char* del_dir;
+		del_dir = g_build_path (G_DIR_SEPARATOR_S, self->theme_dir, geany_colorizer_ui_get_current_theme (self), NULL);
+		g_rmdir (del_dir);
+		geany_colorizer_ui_load_themes (self);
+		_g_free0 (del_dir);
+	}
+	gtk_object_destroy ((GtkObject*) dlg);
+	_g_object_unref0 (dlg);
+}
+
+
+static void _geany_colorizer_ui_on_new_theme_clicked_gtk_button_clicked (GtkButton* _sender, gpointer self) {
+	geany_colorizer_ui_on_new_theme_clicked (self);
+}
+
+
+static void _geany_colorizer_ui_on_delete_theme_clicked_gtk_button_clicked (GtkButton* _sender, gpointer self) {
+	geany_colorizer_ui_on_delete_theme_clicked (self);
+}
+
+
+static void _geany_colorizer_ui_on_tree_row_activated_gtk_tree_view_row_activated (GtkTreeView* _sender, GtkTreePath* path, GtkTreeViewColumn* column, gpointer self) {
+	geany_colorizer_ui_on_tree_row_activated (self, path, column);
+}
+
+
 static void _geany_colorizer_ui_on_combo_lexer_changed_gtk_combo_box_changed (GtkComboBox* _sender, gpointer self) {
 	geany_colorizer_ui_on_combo_lexer_changed (self);
 }
@@ -235,6 +339,9 @@ static void _geany_colorizer_ui_on_font_underline_toggled_gtk_toggle_button_togg
 
 void geany_colorizer_ui_connect_signals (GeanyColorizerUI* self) {
 	g_return_if_fail (self != NULL);
+	g_signal_connect_object (self->priv->buttonNew, "clicked", (GCallback) _geany_colorizer_ui_on_new_theme_clicked_gtk_button_clicked, self, 0);
+	g_signal_connect_object (self->priv->buttonDelete, "clicked", (GCallback) _geany_colorizer_ui_on_delete_theme_clicked_gtk_button_clicked, self, 0);
+	g_signal_connect_object (self->priv->treeThemes, "row-activated", (GCallback) _geany_colorizer_ui_on_tree_row_activated_gtk_tree_view_row_activated, self, 0);
 	g_signal_connect_object (self->priv->comboLexer, "changed", (GCallback) _geany_colorizer_ui_on_combo_lexer_changed_gtk_combo_box_changed, self, 0);
 	g_signal_connect_object (self->priv->comboStyle, "changed", (GCallback) _geany_colorizer_ui_on_combo_style_changed_gtk_combo_box_changed, self, 0);
 	g_signal_connect_object (self->priv->notebookMain, "switch-page", (GCallback) _geany_colorizer_ui_on_notebook_page_switched_gtk_notebook_switch_page, self, 0);
@@ -244,6 +351,37 @@ void geany_colorizer_ui_connect_signals (GeanyColorizerUI* self) {
 	g_signal_connect_object ((GtkToggleButton*) self->priv->checkFontBold, "toggled", (GCallback) _geany_colorizer_ui_on_font_bold_toggled_gtk_toggle_button_toggled, self, 0);
 	g_signal_connect_object ((GtkToggleButton*) self->priv->checkFontItalic, "toggled", (GCallback) _geany_colorizer_ui_on_font_italic_toggled_gtk_toggle_button_toggled, self, 0);
 	g_signal_connect_object ((GtkToggleButton*) self->priv->checkFontUnderline, "toggled", (GCallback) _geany_colorizer_ui_on_font_underline_toggled_gtk_toggle_button_toggled, self, 0);
+}
+
+
+static void geany_colorizer_ui_load_themes (GeanyColorizerUI* self) {
+	GtkListStore* _tmp0_;
+	GtkTreeIter iter = {0};
+	g_return_if_fail (self != NULL);
+	self->priv->theme_model = (_tmp0_ = gtk_list_store_new (1, G_TYPE_STRING), _g_object_unref0 (self->priv->theme_model), _tmp0_);
+	gtk_tree_view_set_model (self->priv->treeThemes, (GtkTreeModel*) self->priv->theme_model);
+	{
+		gint _tmp1_;
+		char** theme_collection;
+		int theme_collection_length1;
+		int theme_it;
+		theme_collection = geany_colorizer_ui_get_available_themes (self, &_tmp1_);
+		theme_collection_length1 = _tmp1_;
+		for (theme_it = 0; theme_it < _tmp1_; theme_it = theme_it + 1) {
+			char* theme;
+			theme = g_strdup (theme_collection[theme_it]);
+			{
+				gtk_list_store_append (self->priv->theme_model, &iter);
+				gtk_list_store_set (self->priv->theme_model, &iter, 0, theme, -1);
+				_g_free0 (theme);
+			}
+		}
+	}
+}
+
+
+static gpointer _g_object_ref0 (gpointer self) {
+	return self ? g_object_ref (self) : NULL;
 }
 
 
@@ -260,23 +398,27 @@ void geany_colorizer_ui_init_ui (GeanyColorizerUI* self) {
 	GtkButton* _tmp9_;
 	GtkButton* _tmp10_;
 	GtkButton* _tmp11_;
+	GtkTreeView* _tmp12_;
+	GtkCellRendererText* _tmp13_;
+	GtkTreeViewColumn* col;
+	GtkListStore* _tmp14_;
 	GtkHBox* hbox;
 	GtkScrolledWindow* swin;
 	GtkVButtonBox* bb;
-	GtkLabel* _tmp12_;
-	GtkHBox* _tmp13_;
-	GtkLabel* _tmp14_;
 	GtkLabel* _tmp15_;
-	GtkHSeparator* _tmp16_;
-	GtkVBox* vbox;
+	GtkHBox* _tmp16_;
 	GtkLabel* _tmp17_;
-	GtkHBox* _tmp18_;
-	GtkVBox* _tmp19_;
-	GtkHSeparator* _tmp20_;
-	GtkLabel* _tmp21_;
-	GtkHBox* _tmp22_;
-	GtkVBox* _tmp23_;
+	GtkLabel* _tmp18_;
+	GtkHSeparator* _tmp19_;
+	GtkVBox* vbox;
+	GtkLabel* _tmp20_;
+	GtkHBox* _tmp21_;
+	GtkVBox* _tmp22_;
+	GtkHSeparator* _tmp23_;
 	GtkLabel* _tmp24_;
+	GtkHBox* _tmp25_;
+	GtkVBox* _tmp26_;
+	GtkLabel* _tmp27_;
 	g_return_if_fail (self != NULL);
 	self->priv->comboLexer = (_tmp0_ = g_object_ref_sink ((GtkComboBox*) gtk_combo_box_new_text ()), _g_object_unref0 (self->priv->comboLexer), _tmp0_);
 	self->priv->comboStyle = (_tmp1_ = g_object_ref_sink ((GtkComboBox*) gtk_combo_box_new_text ()), _g_object_unref0 (self->priv->comboStyle), _tmp1_);
@@ -297,11 +439,21 @@ void geany_colorizer_ui_init_ui (GeanyColorizerUI* self) {
 	gtk_color_selection_set_has_palette (self->priv->colorselBackground, TRUE);
 	gtk_box_set_homogeneous ((GtkBox*) self->priv->colorselBackground, TRUE);
 	gtk_toggle_button_set_active ((GtkToggleButton*) self->priv->checkUseCommonBackground, TRUE);
+	self->priv->treeThemes = (_tmp12_ = g_object_ref_sink ((GtkTreeView*) gtk_tree_view_new ()), _g_object_unref0 (self->priv->treeThemes), _tmp12_);
+	gtk_tree_view_set_headers_visible (self->priv->treeThemes, FALSE);
+	gtk_tree_view_insert_column_with_attributes (self->priv->treeThemes, -1, "Theme", (GtkCellRenderer*) (_tmp13_ = g_object_ref_sink ((GtkCellRendererText*) gtk_cell_renderer_text_new ())), "text", 0, NULL);
+	_g_object_unref0 (_tmp13_);
+	col = _g_object_ref0 (gtk_tree_view_get_column (self->priv->treeThemes, 0));
+	gtk_tree_view_column_set_sort_column_id (col, 0);
+	gtk_tree_view_column_set_sort_order (col, GTK_SORT_ASCENDING);
+	self->priv->theme_model = (_tmp14_ = gtk_list_store_new (1, G_TYPE_STRING), _g_object_unref0 (self->priv->theme_model), _tmp14_);
+	geany_colorizer_ui_load_themes (self);
 	hbox = g_object_ref_sink ((GtkHBox*) gtk_hbox_new (FALSE, 6));
 	gtk_container_set_border_width ((GtkContainer*) hbox, (guint) 6);
 	swin = g_object_ref_sink ((GtkScrolledWindow*) gtk_scrolled_window_new (NULL, NULL));
 	gtk_scrolled_window_set_policy (swin, GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 	gtk_scrolled_window_set_shadow_type (swin, GTK_SHADOW_ETCHED_IN);
+	gtk_container_add ((GtkContainer*) swin, (GtkWidget*) self->priv->treeThemes);
 	gtk_box_pack_start ((GtkBox*) hbox, (GtkWidget*) swin, TRUE, TRUE, (guint) 0);
 	bb = g_object_ref_sink ((GtkVButtonBox*) gtk_vbutton_box_new ());
 	gtk_button_box_set_layout ((GtkButtonBox*) bb, GTK_BUTTONBOX_START);
@@ -310,42 +462,42 @@ void geany_colorizer_ui_init_ui (GeanyColorizerUI* self) {
 	gtk_box_pack_start ((GtkBox*) bb, (GtkWidget*) self->priv->buttonDelete, TRUE, TRUE, (guint) 0);
 	gtk_box_pack_start ((GtkBox*) bb, (GtkWidget*) self->priv->buttonSave, TRUE, TRUE, (guint) 0);
 	gtk_box_pack_start ((GtkBox*) hbox, (GtkWidget*) bb, FALSE, TRUE, (guint) 0);
-	gtk_notebook_append_page (self->priv->notebookMain, (GtkWidget*) hbox, (GtkWidget*) (_tmp12_ = g_object_ref_sink ((GtkLabel*) gtk_label_new ("Themes"))));
-	_g_object_unref0 (_tmp12_);
-	hbox = (_tmp13_ = g_object_ref_sink ((GtkHBox*) gtk_hbox_new (FALSE, 6)), _g_object_unref0 (hbox), _tmp13_);
-	gtk_box_pack_start ((GtkBox*) hbox, (GtkWidget*) (_tmp14_ = g_object_ref_sink ((GtkLabel*) gtk_label_new ("Lexer:"))), FALSE, TRUE, (guint) 0);
-	_g_object_unref0 (_tmp14_);
-	gtk_box_pack_start ((GtkBox*) hbox, (GtkWidget*) self->priv->comboLexer, TRUE, TRUE, (guint) 0);
-	gtk_box_pack_start ((GtkBox*) hbox, (GtkWidget*) (_tmp15_ = g_object_ref_sink ((GtkLabel*) gtk_label_new ("Style:"))), FALSE, TRUE, (guint) 0);
+	gtk_notebook_append_page (self->priv->notebookMain, (GtkWidget*) hbox, (GtkWidget*) (_tmp15_ = g_object_ref_sink ((GtkLabel*) gtk_label_new ("Themes"))));
 	_g_object_unref0 (_tmp15_);
+	hbox = (_tmp16_ = g_object_ref_sink ((GtkHBox*) gtk_hbox_new (FALSE, 6)), _g_object_unref0 (hbox), _tmp16_);
+	gtk_box_pack_start ((GtkBox*) hbox, (GtkWidget*) (_tmp17_ = g_object_ref_sink ((GtkLabel*) gtk_label_new ("Lexer:"))), FALSE, TRUE, (guint) 0);
+	_g_object_unref0 (_tmp17_);
+	gtk_box_pack_start ((GtkBox*) hbox, (GtkWidget*) self->priv->comboLexer, TRUE, TRUE, (guint) 0);
+	gtk_box_pack_start ((GtkBox*) hbox, (GtkWidget*) (_tmp18_ = g_object_ref_sink ((GtkLabel*) gtk_label_new ("Style:"))), FALSE, TRUE, (guint) 0);
+	_g_object_unref0 (_tmp18_);
 	gtk_box_pack_start ((GtkBox*) hbox, (GtkWidget*) self->priv->comboStyle, TRUE, TRUE, (guint) 0);
 	gtk_box_pack_start ((GtkBox*) self, (GtkWidget*) hbox, FALSE, TRUE, (guint) 0);
-	gtk_box_pack_start ((GtkBox*) self, (GtkWidget*) (_tmp16_ = g_object_ref_sink ((GtkHSeparator*) gtk_hseparator_new ())), FALSE, TRUE, (guint) 0);
-	_g_object_unref0 (_tmp16_);
+	gtk_box_pack_start ((GtkBox*) self, (GtkWidget*) (_tmp19_ = g_object_ref_sink ((GtkHSeparator*) gtk_hseparator_new ())), FALSE, TRUE, (guint) 0);
+	_g_object_unref0 (_tmp19_);
 	vbox = g_object_ref_sink ((GtkVBox*) gtk_vbox_new (FALSE, 6));
 	gtk_container_set_border_width ((GtkContainer*) vbox, (guint) 6);
 	gtk_box_pack_start ((GtkBox*) vbox, (GtkWidget*) self->priv->colorselForeground, TRUE, TRUE, (guint) 0);
-	gtk_notebook_append_page (self->priv->notebookMain, (GtkWidget*) vbox, (GtkWidget*) (_tmp17_ = g_object_ref_sink ((GtkLabel*) gtk_label_new ("Foreground"))));
-	_g_object_unref0 (_tmp17_);
-	hbox = (_tmp18_ = g_object_ref_sink ((GtkHBox*) gtk_hbox_new (FALSE, 6)), _g_object_unref0 (hbox), _tmp18_);
+	gtk_notebook_append_page (self->priv->notebookMain, (GtkWidget*) vbox, (GtkWidget*) (_tmp20_ = g_object_ref_sink ((GtkLabel*) gtk_label_new ("Foreground"))));
+	_g_object_unref0 (_tmp20_);
+	hbox = (_tmp21_ = g_object_ref_sink ((GtkHBox*) gtk_hbox_new (FALSE, 6)), _g_object_unref0 (hbox), _tmp21_);
 	gtk_box_pack_start ((GtkBox*) hbox, (GtkWidget*) self->priv->checkUseCommonBackground, FALSE, TRUE, (guint) 0);
-	vbox = (_tmp19_ = g_object_ref_sink ((GtkVBox*) gtk_vbox_new (FALSE, 6)), _g_object_unref0 (vbox), _tmp19_);
+	vbox = (_tmp22_ = g_object_ref_sink ((GtkVBox*) gtk_vbox_new (FALSE, 6)), _g_object_unref0 (vbox), _tmp22_);
 	gtk_container_set_border_width ((GtkContainer*) vbox, (guint) 6);
 	gtk_box_pack_start ((GtkBox*) vbox, (GtkWidget*) hbox, FALSE, TRUE, (guint) 0);
-	gtk_box_pack_start ((GtkBox*) vbox, (GtkWidget*) (_tmp20_ = g_object_ref_sink ((GtkHSeparator*) gtk_hseparator_new ())), FALSE, TRUE, (guint) 0);
-	_g_object_unref0 (_tmp20_);
+	gtk_box_pack_start ((GtkBox*) vbox, (GtkWidget*) (_tmp23_ = g_object_ref_sink ((GtkHSeparator*) gtk_hseparator_new ())), FALSE, TRUE, (guint) 0);
+	_g_object_unref0 (_tmp23_);
 	gtk_box_pack_start ((GtkBox*) vbox, (GtkWidget*) self->priv->colorselBackground, TRUE, TRUE, (guint) 0);
-	gtk_notebook_append_page (self->priv->notebookMain, (GtkWidget*) vbox, (GtkWidget*) (_tmp21_ = g_object_ref_sink ((GtkLabel*) gtk_label_new ("Background"))));
-	_g_object_unref0 (_tmp21_);
-	hbox = (_tmp22_ = g_object_ref_sink ((GtkHBox*) gtk_hbox_new (FALSE, 6)), _g_object_unref0 (hbox), _tmp22_);
+	gtk_notebook_append_page (self->priv->notebookMain, (GtkWidget*) vbox, (GtkWidget*) (_tmp24_ = g_object_ref_sink ((GtkLabel*) gtk_label_new ("Background"))));
+	_g_object_unref0 (_tmp24_);
+	hbox = (_tmp25_ = g_object_ref_sink ((GtkHBox*) gtk_hbox_new (FALSE, 6)), _g_object_unref0 (hbox), _tmp25_);
 	gtk_box_pack_start ((GtkBox*) hbox, (GtkWidget*) self->priv->checkFontBold, FALSE, TRUE, (guint) 0);
 	gtk_box_pack_start ((GtkBox*) hbox, (GtkWidget*) self->priv->checkFontItalic, FALSE, TRUE, (guint) 0);
 	gtk_box_pack_start ((GtkBox*) hbox, (GtkWidget*) self->priv->checkFontUnderline, FALSE, TRUE, (guint) 0);
-	vbox = (_tmp23_ = g_object_ref_sink ((GtkVBox*) gtk_vbox_new (FALSE, 6)), _g_object_unref0 (vbox), _tmp23_);
+	vbox = (_tmp26_ = g_object_ref_sink ((GtkVBox*) gtk_vbox_new (FALSE, 6)), _g_object_unref0 (vbox), _tmp26_);
 	gtk_container_set_border_width ((GtkContainer*) vbox, (guint) 6);
 	gtk_box_pack_start ((GtkBox*) vbox, (GtkWidget*) hbox, FALSE, TRUE, (guint) 0);
-	gtk_notebook_append_page (self->priv->notebookMain, (GtkWidget*) vbox, (GtkWidget*) (_tmp24_ = g_object_ref_sink ((GtkLabel*) gtk_label_new ("Font"))));
-	_g_object_unref0 (_tmp24_);
+	gtk_notebook_append_page (self->priv->notebookMain, (GtkWidget*) vbox, (GtkWidget*) (_tmp27_ = g_object_ref_sink ((GtkLabel*) gtk_label_new ("Font"))));
+	_g_object_unref0 (_tmp27_);
 	gtk_box_pack_start ((GtkBox*) self, (GtkWidget*) self->priv->notebookMain, TRUE, TRUE, (guint) 0);
 	gtk_container_set_border_width ((GtkContainer*) self, (guint) 6);
 	gtk_box_set_spacing ((GtkBox*) self, 6);
@@ -355,6 +507,7 @@ void geany_colorizer_ui_init_ui (GeanyColorizerUI* self) {
 	_g_object_unref0 (bb);
 	_g_object_unref0 (swin);
 	_g_object_unref0 (hbox);
+	_g_object_unref0 (col);
 }
 
 
@@ -398,6 +551,71 @@ void geany_colorizer_ui_color_from_int (gint color, GdkColor* result) {
 }
 
 
+static void _vala_array_add1 (char*** array, int* length, int* size, char* value) {
+	if ((*length) == (*size)) {
+		*size = (*size) ? (2 * (*size)) : 4;
+		*array = g_renew (char*, *array, (*size) + 1);
+	}
+	(*array)[(*length)++] = value;
+	(*array)[*length] = NULL;
+}
+
+
+char** geany_colorizer_ui_get_available_themes (GeanyColorizerUI* self, int* result_length1) {
+	char** result;
+	char** _tmp0_ = NULL;
+	char** _tmp1_;
+	char* name;
+	GDir* d;
+	char** _tmp3_;
+	GError * _inner_error_ = NULL;
+	g_return_val_if_fail (self != NULL, NULL);
+	self->priv->_available_themes = (_tmp1_ = (_tmp0_ = g_new0 (char*, 0 + 1), _tmp0_), self->priv->_available_themes = (_vala_array_free (self->priv->_available_themes, self->priv->_available_themes_length1, (GDestroyNotify) g_free), NULL), self->priv->_available_themes_length1 = 0, self->priv->__available_themes_size_ = self->priv->_available_themes_length1, _tmp1_);
+	name = NULL;
+	d = g_dir_open (self->theme_dir, 0, &_inner_error_);
+	if (_inner_error_ != NULL) {
+		_g_free0 (name);
+		g_critical ("file %s: line %d: uncaught error: %s (%s, %d)", __FILE__, __LINE__, _inner_error_->message, g_quark_to_string (_inner_error_->domain), _inner_error_->code);
+		g_clear_error (&_inner_error_);
+		return NULL;
+	}
+	while (TRUE) {
+		char* _tmp2_;
+		if (!((name = (_tmp2_ = g_strdup (g_dir_read_name (d)), _g_free0 (name), _tmp2_)) != NULL)) {
+			break;
+		}
+		_vala_array_add1 (&self->priv->_available_themes, &self->priv->_available_themes_length1, &self->priv->__available_themes_size_, g_strdup (name));
+	}
+	result = (_tmp3_ = self->priv->_available_themes, *result_length1 = self->priv->_available_themes_length1, _tmp3_);
+	_g_dir_close0 (d);
+	_g_free0 (name);
+	return result;
+	_g_dir_close0 (d);
+	_g_free0 (name);
+}
+
+
+const char* geany_colorizer_ui_get_current_theme (GeanyColorizerUI* self) {
+	const char* result;
+	GtkTreeModel* model;
+	GtkTreeIter iter = {0};
+	GtkTreeSelection* sel;
+	GtkTreeModel* _tmp0_ = NULL;
+	gboolean _tmp1_;
+	GtkTreeModel* _tmp2_;
+	g_return_val_if_fail (self != NULL, NULL);
+	model = NULL;
+	sel = _g_object_ref0 (gtk_tree_view_get_selection (self->priv->treeThemes));
+	if ((_tmp1_ = gtk_tree_selection_get_selected (sel, &_tmp0_, &iter), model = (_tmp2_ = _g_object_ref0 (_tmp0_), _g_object_unref0 (model), _tmp2_), _tmp1_)) {
+		gtk_tree_model_get (model, &iter, 0, &self->priv->_current_theme, -1);
+	}
+	result = self->priv->_current_theme;
+	_g_object_unref0 (sel);
+	_g_object_unref0 (model);
+	return result;
+}
+
+
 GtkComboBox* geany_colorizer_ui_get_combo_lexer (GeanyColorizerUI* self) {
 	GtkComboBox* result;
 	g_return_val_if_fail (self != NULL, NULL);
@@ -424,7 +642,11 @@ gint geany_colorizer_ui_get_current_lexer (GeanyColorizerUI* self) {
 
 void geany_colorizer_ui_set_current_lexer (GeanyColorizerUI* self, gint value) {
 	g_return_if_fail (self != NULL);
-	gtk_combo_box_set_active (self->priv->comboLexer, value);
+	if (value != self->priv->_last_lexer) {
+		g_signal_emit_by_name (self, "lexer-changed", value);
+		self->priv->_last_lexer = value;
+		gtk_combo_box_set_active (self->priv->comboLexer, value);
+	}
 	g_object_notify ((GObject *) self, "current-lexer");
 }
 
@@ -439,7 +661,11 @@ gint geany_colorizer_ui_get_current_style (GeanyColorizerUI* self) {
 
 void geany_colorizer_ui_set_current_style (GeanyColorizerUI* self, gint value) {
 	g_return_if_fail (self != NULL);
-	gtk_combo_box_set_active (self->priv->comboStyle, value);
+	if (value != self->priv->_last_style) {
+		g_signal_emit_by_name (self, "style-changed", value);
+		self->priv->_last_style = value;
+		gtk_combo_box_set_active (self->priv->comboStyle, value);
+	}
 	g_object_notify ((GObject *) self, "current-style");
 }
 
@@ -554,6 +780,8 @@ static void geany_colorizer_ui_class_init (GeanyColorizerUIClass * klass) {
 	G_OBJECT_CLASS (klass)->get_property = geany_colorizer_ui_get_property;
 	G_OBJECT_CLASS (klass)->set_property = geany_colorizer_ui_set_property;
 	G_OBJECT_CLASS (klass)->finalize = geany_colorizer_ui_finalize;
+	g_object_class_install_property (G_OBJECT_CLASS (klass), GEANY_COLORIZER_UI_AVAILABLE_THEMES, g_param_spec_boxed ("available-themes", "available-themes", "available-themes", G_TYPE_STRV, G_PARAM_STATIC_NAME | G_PARAM_STATIC_NICK | G_PARAM_STATIC_BLURB | G_PARAM_READABLE));
+	g_object_class_install_property (G_OBJECT_CLASS (klass), GEANY_COLORIZER_UI_CURRENT_THEME, g_param_spec_string ("current-theme", "current-theme", "current-theme", NULL, G_PARAM_STATIC_NAME | G_PARAM_STATIC_NICK | G_PARAM_STATIC_BLURB | G_PARAM_READABLE));
 	g_object_class_install_property (G_OBJECT_CLASS (klass), GEANY_COLORIZER_UI_COMBO_LEXER, g_param_spec_object ("combo-lexer", "combo-lexer", "combo-lexer", GTK_TYPE_COMBO_BOX, G_PARAM_STATIC_NAME | G_PARAM_STATIC_NICK | G_PARAM_STATIC_BLURB | G_PARAM_READABLE));
 	g_object_class_install_property (G_OBJECT_CLASS (klass), GEANY_COLORIZER_UI_COMBO_STYLE, g_param_spec_object ("combo-style", "combo-style", "combo-style", GTK_TYPE_COMBO_BOX, G_PARAM_STATIC_NAME | G_PARAM_STATIC_NICK | G_PARAM_STATIC_BLURB | G_PARAM_READABLE));
 	g_object_class_install_property (G_OBJECT_CLASS (klass), GEANY_COLORIZER_UI_CURRENT_LEXER, g_param_spec_int ("current-lexer", "current-lexer", "current-lexer", G_MININT, G_MAXINT, 0, G_PARAM_STATIC_NAME | G_PARAM_STATIC_NICK | G_PARAM_STATIC_BLURB | G_PARAM_READABLE | G_PARAM_WRITABLE));
@@ -574,6 +802,7 @@ static void geany_colorizer_ui_class_init (GeanyColorizerUIClass * klass) {
 	g_signal_new ("font_bold_toggled", GEANY_TYPE_COLORIZER_UI, G_SIGNAL_RUN_LAST, 0, NULL, NULL, g_cclosure_marshal_VOID__BOOLEAN, G_TYPE_NONE, 1, G_TYPE_BOOLEAN);
 	g_signal_new ("font_italic_toggled", GEANY_TYPE_COLORIZER_UI, G_SIGNAL_RUN_LAST, 0, NULL, NULL, g_cclosure_marshal_VOID__BOOLEAN, G_TYPE_NONE, 1, G_TYPE_BOOLEAN);
 	g_signal_new ("font_underline_toggled", GEANY_TYPE_COLORIZER_UI, G_SIGNAL_RUN_LAST, 0, NULL, NULL, g_cclosure_marshal_VOID__BOOLEAN, G_TYPE_NONE, 1, G_TYPE_BOOLEAN);
+	g_signal_new ("theme_changed", GEANY_TYPE_COLORIZER_UI, G_SIGNAL_RUN_LAST, 0, NULL, NULL, g_cclosure_marshal_VOID__STRING, G_TYPE_NONE, 1, G_TYPE_STRING);
 }
 
 
@@ -585,6 +814,8 @@ static void geany_colorizer_ui_instance_init (GeanyColorizerUI * self) {
 static void geany_colorizer_ui_finalize (GObject* obj) {
 	GeanyColorizerUI * self;
 	self = GEANY_COLORIZER_UI (obj);
+	_g_free0 (self->theme_dir);
+	_g_object_unref0 (self->priv->theme_model);
 	_g_object_unref0 (self->priv->comboLexer);
 	_g_object_unref0 (self->priv->comboStyle);
 	_g_object_unref0 (self->priv->notebookMain);
@@ -599,6 +830,8 @@ static void geany_colorizer_ui_finalize (GObject* obj) {
 	_g_object_unref0 (self->priv->buttonSave);
 	_g_object_unref0 (self->priv->buttonOpen);
 	_g_object_unref0 (self->priv->buttonDelete);
+	self->priv->_available_themes = (_vala_array_free (self->priv->_available_themes, self->priv->_available_themes_length1, (GDestroyNotify) g_free), NULL);
+	_g_free0 (self->priv->_current_theme);
 	G_OBJECT_CLASS (geany_colorizer_ui_parent_class)->finalize (obj);
 }
 
@@ -617,8 +850,15 @@ GType geany_colorizer_ui_get_type (void) {
 
 static void geany_colorizer_ui_get_property (GObject * object, guint property_id, GValue * value, GParamSpec * pspec) {
 	GeanyColorizerUI * self;
+	int length;
 	self = GEANY_COLORIZER_UI (object);
 	switch (property_id) {
+		case GEANY_COLORIZER_UI_AVAILABLE_THEMES:
+		g_value_set_boxed (value, geany_colorizer_ui_get_available_themes (self, &length));
+		break;
+		case GEANY_COLORIZER_UI_CURRENT_THEME:
+		g_value_set_string (value, geany_colorizer_ui_get_current_theme (self));
+		break;
 		case GEANY_COLORIZER_UI_COMBO_LEXER:
 		g_value_set_object (value, geany_colorizer_ui_get_combo_lexer (self));
 		break;
@@ -688,6 +928,24 @@ static void geany_colorizer_ui_set_property (GObject * object, guint property_id
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
 		break;
 	}
+}
+
+
+static void _vala_array_destroy (gpointer array, gint array_length, GDestroyNotify destroy_func) {
+	if ((array != NULL) && (destroy_func != NULL)) {
+		int i;
+		for (i = 0; i < array_length; i = i + 1) {
+			if (((gpointer*) array)[i] != NULL) {
+				destroy_func (((gpointer*) array)[i]);
+			}
+		}
+	}
+}
+
+
+static void _vala_array_free (gpointer array, gint array_length, GDestroyNotify destroy_func) {
+	_vala_array_destroy (array, array_length, destroy_func);
+	g_free (array);
 }
 
 

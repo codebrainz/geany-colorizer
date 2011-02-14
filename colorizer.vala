@@ -36,6 +36,8 @@ private static bool fonts_bold[33];
 private static bool fonts_italic[33];
 private static bool fonts_underline[33];
 
+private static int[,,] theme_data;
+
 private static bool in_message_window = true;
 
 private static Gtk.MenuItem sep;
@@ -48,8 +50,8 @@ private static bool styling = false;
 
 private static string config_dir;
 private static string config_file;
+private static string theme_dir;
 private static string current_theme;
-
 
 //------------------------------------------------------------------------------
 // Miscellaneous helper functions
@@ -90,7 +92,6 @@ private static string? lexer_language() {
  * active/current scintilla */
 private void on_current_document_changed(GLib.Object ignored, Geany.Document doc) 
 {	
-	debug("Document changed");
 	if (doc.editor.sci != null) {
 		
 		sci = doc.editor.sci;
@@ -128,7 +129,7 @@ public bool colorize_editor()
 	if (have_text()) {
 		
 		/* put an indicator under all words with the current style */
-		sci.send_message(Messages.INDICSETSTYLE, FACELIFT_INDIC, IndicatorStyles.SQUIGGLE);
+		sci.send_message(Messages.INDICSETSTYLE, FACELIFT_INDIC, IndicatorStyles.TT);
 		sci.send_message(Messages.INDICSETFORE, FACELIFT_INDIC, 0xBFBFBF);
 		long num_chars = text_length();
 		sci.send_message(Messages.SETINDICATORCURRENT, FACELIFT_INDIC);
@@ -228,6 +229,11 @@ private void on_font_underline_toggled(bool font_underline)
 		fonts_underline[ui.current_style] = font_underline;
 		sci.send_message(Messages.STYLESETUNDERLINE, ui.current_style, (long)font_underline);
 	}
+}
+
+private void on_lexer_changed(int lexer)
+{
+	debug("Lexer changed to %d", lexer);
 }
 
 /* show/hide the dialog/notebook page */
@@ -340,16 +346,30 @@ public void save_config_file(string path) {
 	}
 }
 
+public void create_dir(string path) 
+{
+	if (!FileUtils.test(path, FileTest.EXISTS))
+		DirUtils.create_with_parents(path, 0700);
+}
+
+
 public void plugin_init (Geany.Data data)
 {
+	theme_data = new int[100,33,5];
+	
 	config_dir = Path.build_path(Path.DIR_SEPARATOR_S, 
 									geany_data.app.configdir, 
 									"plugins",
 									"colorizer");
 	
-	if (!FileUtils.test(config_dir, FileTest.EXISTS | FileTest.IS_DIR)) {
-		DirUtils.create_with_parents(config_dir, 0700);
-	}
+	create_dir(config_dir);
+	
+	theme_dir = Path.build_path(Path.DIR_SEPARATOR_S, config_dir, "themes");
+	create_dir(theme_dir);
+	
+	string default_theme_dir = Path.build_path(Path.DIR_SEPARATOR_S, 
+									theme_dir, "Default");
+	create_dir(default_theme_dir);
 	
 	config_file = Path.build_path(Path.DIR_SEPARATOR_S,
 									config_dir,
@@ -372,12 +392,13 @@ public void plugin_init (Geany.Data data)
 	geany_plugin.signal_connect(null, "document-new", true,
 		(GLib.Callback)on_current_document_changed, null);
 
-	ui = new ColorizerUI();
+	ui = new ColorizerUI(theme_dir);
 	ui.foreground_color_changed.connect(on_fg_color_changed);
 	ui.background_color_changed.connect(on_bg_color_changed);
 	ui.font_bold_toggled.connect(on_font_bold_toggled);
 	ui.font_italic_toggled.connect(on_font_italic_toggled);
 	ui.font_underline_toggled.connect(on_font_underline_toggled);
+	ui.lexer_changed.connect(on_lexer_changed);
 
 	if (in_message_window) {
 	

@@ -50,6 +50,14 @@ extern gboolean fonts_italic[33];
 gboolean fonts_italic[33] = {0};
 extern gboolean fonts_underline[33];
 gboolean fonts_underline[33] = {0};
+extern gint* theme_data;
+extern gint theme_data_length1;
+extern gint theme_data_length2;
+extern gint theme_data_length3;
+gint* theme_data = NULL;
+gint theme_data_length1 = 0;
+gint theme_data_length2 = 0;
+gint theme_data_length3 = 0;
 extern gboolean in_message_window;
 gboolean in_message_window = TRUE;
 extern GtkMenuItem* sep;
@@ -68,6 +76,8 @@ extern char* config_dir;
 char* config_dir = NULL;
 extern char* config_file;
 char* config_file = NULL;
+extern char* theme_dir;
+char* theme_dir = NULL;
 extern char* current_theme;
 char* current_theme = NULL;
 
@@ -96,19 +106,22 @@ gboolean geany_colorizer_ui_get_use_common_background (GeanyColorizerUI* self);
 void on_font_bold_toggled (gboolean font_bold);
 void on_font_italic_toggled (gboolean font_italic);
 void on_font_underline_toggled (gboolean font_underline);
+void on_lexer_changed (gint lexer);
 void on_open_toggled (void);
 gboolean on_dialog_delete (void);
 void on_dialog_response (gint response_id);
 void init_config_file (const char* path);
 void save_config_file (const char* path);
+void create_dir (const char* path);
 void plugin_init (GeanyData* data);
-GeanyColorizerUI* geany_colorizer_ui_new (void);
-GeanyColorizerUI* geany_colorizer_ui_construct (GType object_type);
+GeanyColorizerUI* geany_colorizer_ui_new (const char* themedir);
+GeanyColorizerUI* geany_colorizer_ui_construct (GType object_type, const char* themedir);
 static void _on_fg_color_changed_geany_colorizer_ui_foreground_color_changed (GeanyColorizerUI* _sender, gint color, gpointer self);
 static void _on_bg_color_changed_geany_colorizer_ui_background_color_changed (GeanyColorizerUI* _sender, gint color, gpointer self);
 static void _on_font_bold_toggled_geany_colorizer_ui_font_bold_toggled (GeanyColorizerUI* _sender, gboolean font_bold, gpointer self);
 static void _on_font_italic_toggled_geany_colorizer_ui_font_italic_toggled (GeanyColorizerUI* _sender, gboolean font_italic, gpointer self);
 static void _on_font_underline_toggled_geany_colorizer_ui_font_underline_toggled (GeanyColorizerUI* _sender, gboolean font_italic, gpointer self);
+static void _on_lexer_changed_geany_colorizer_ui_lexer_changed (GeanyColorizerUI* _sender, gint lexer_id, gpointer self);
 static gboolean _on_dialog_delete_gtk_widget_delete_event (GtkWidget* _sender, GdkEvent* event, gpointer self);
 static void _on_dialog_response_gtk_dialog_response (GtkDialog* _sender, gint response_id, gpointer self);
 GtkComboBox* geany_colorizer_ui_get_combo_lexer (GeanyColorizerUI* self);
@@ -205,7 +218,6 @@ static void _on_editor_notif_scintilla_object_sci_notify (ScintillaObject* _send
 void on_current_document_changed (GObject* ignored, struct GeanyDocument* doc) {
 	g_return_if_fail (ignored != NULL);
 	g_return_if_fail (doc != NULL);
-	g_debug ("colorizer.vala:93: Document changed");
 	if (doc->editor->sci != NULL) {
 		gboolean _tmp0_ = FALSE;
 		sci = (ScintillaObject*) doc->editor->sci;
@@ -252,7 +264,7 @@ gboolean colorize_editor (void) {
 	gboolean result = FALSE;
 	if (have_text ()) {
 		glong num_chars;
-		scintilla_send_message (sci, (unsigned int) SCI_INDICSETSTYLE, (uptr_t) ((gulong) FACELIFT_INDIC), (sptr_t) ((glong) INDIC_SQUIGGLE));
+		scintilla_send_message (sci, (unsigned int) SCI_INDICSETSTYLE, (uptr_t) ((gulong) FACELIFT_INDIC), (sptr_t) ((glong) INDIC_TT));
 		scintilla_send_message (sci, (unsigned int) SCI_INDICSETFORE, (uptr_t) ((gulong) FACELIFT_INDIC), (sptr_t) ((glong) 0xBFBFBF));
 		num_chars = text_length ();
 		scintilla_send_message (sci, (unsigned int) SCI_SETINDICATORCURRENT, (uptr_t) ((gulong) FACELIFT_INDIC), (sptr_t) 0);
@@ -417,6 +429,11 @@ void on_font_underline_toggled (gboolean font_underline) {
 }
 
 
+void on_lexer_changed (gint lexer) {
+	g_debug ("colorizer.vala:236: Lexer changed to %d", lexer);
+}
+
+
 void on_open_toggled (void) {
 	gboolean state;
 	if (sci == NULL) {
@@ -427,7 +444,7 @@ void on_open_toggled (void) {
 	state = gtk_check_menu_item_get_active (item);
 	if (state) {
 		colorizing = TRUE;
-		g_debug ("colorizer.vala:247: Colorizing started");
+		g_debug ("colorizer.vala:253: Colorizing started");
 		if (in_message_window) {
 			gtk_widget_show_all ((GtkWidget*) swin);
 		} else {
@@ -436,7 +453,7 @@ void on_open_toggled (void) {
 		on_current_document_changed ((GObject*) ui, document_get_current ());
 	} else {
 		colorizing = FALSE;
-		g_debug ("colorizer.vala:258: Colorizing ended");
+		g_debug ("colorizer.vala:264: Colorizing ended");
 		if (in_message_window) {
 			gtk_widget_hide ((GtkWidget*) swin);
 		} else {
@@ -449,7 +466,7 @@ void on_open_toggled (void) {
 gboolean on_dialog_delete (void) {
 	gboolean result = FALSE;
 	colorizing = FALSE;
-	g_debug ("colorizer.vala:271: Colorizing ended");
+	g_debug ("colorizer.vala:277: Colorizing ended");
 	if (!in_message_window) {
 		gtk_widget_hide ((GtkWidget*) dialog);
 		gtk_check_menu_item_set_active (item, FALSE);
@@ -463,7 +480,7 @@ gboolean on_dialog_delete (void) {
 
 void on_dialog_response (gint response_id) {
 	colorizing = FALSE;
-	g_debug ("colorizer.vala:282: Colorizing ended");
+	g_debug ("colorizer.vala:288: Colorizing ended");
 	if (!in_message_window) {
 		gtk_widget_hide ((GtkWidget*) dialog);
 		gtk_check_menu_item_set_active (item, FALSE);
@@ -504,7 +521,7 @@ void init_config_file (const char* path) {
 			err = _inner_error_;
 			_inner_error_ = NULL;
 			{
-				g_warning ("colorizer.vala:302: %s", err->message);
+				g_warning ("colorizer.vala:308: %s", err->message);
 				_g_error_free0 (err);
 			}
 		}
@@ -515,7 +532,7 @@ void init_config_file (const char* path) {
 			err = _inner_error_;
 			_inner_error_ = NULL;
 			{
-				g_warning ("colorizer.vala:305: %s", err->message);
+				g_warning ("colorizer.vala:311: %s", err->message);
 				_g_error_free0 (err);
 			}
 		}
@@ -598,7 +615,7 @@ void init_config_file (const char* path) {
 		err = _inner_error_;
 		_inner_error_ = NULL;
 		{
-			g_warning ("colorizer.vala:319: %s", err->message);
+			g_warning ("colorizer.vala:325: %s", err->message);
 			_g_error_free0 (err);
 		}
 	}
@@ -609,7 +626,7 @@ void init_config_file (const char* path) {
 		err = _inner_error_;
 		_inner_error_ = NULL;
 		{
-			g_warning ("colorizer.vala:322: %s", err->message);
+			g_warning ("colorizer.vala:328: %s", err->message);
 			_g_error_free0 (err);
 		}
 	}
@@ -656,7 +673,7 @@ void save_config_file (const char* path) {
 			err = _inner_error_;
 			_inner_error_ = NULL;
 			{
-				g_warning ("colorizer.vala:335: %s", err->message);
+				g_warning ("colorizer.vala:341: %s", err->message);
 				_g_error_free0 (err);
 			}
 		}
@@ -667,7 +684,7 @@ void save_config_file (const char* path) {
 			err = _inner_error_;
 			_inner_error_ = NULL;
 			{
-				g_warning ("colorizer.vala:338: %s", err->message);
+				g_warning ("colorizer.vala:344: %s", err->message);
 				_g_error_free0 (err);
 			}
 		}
@@ -679,6 +696,14 @@ void save_config_file (const char* path) {
 			return;
 		}
 		_g_key_file_free0 (kf);
+	}
+}
+
+
+void create_dir (const char* path) {
+	g_return_if_fail (path != NULL);
+	if (!g_file_test (path, G_FILE_TEST_EXISTS)) {
+		g_mkdir_with_parents (path, 0700);
 	}
 }
 
@@ -708,6 +733,11 @@ static void _on_font_underline_toggled_geany_colorizer_ui_font_underline_toggled
 }
 
 
+static void _on_lexer_changed_geany_colorizer_ui_lexer_changed (GeanyColorizerUI* _sender, gint lexer_id, gpointer self) {
+	on_lexer_changed (lexer_id);
+}
+
+
 static gpointer _g_object_ref0 (gpointer self) {
 	return self ? g_object_ref (self) : NULL;
 }
@@ -731,23 +761,29 @@ static void _on_open_toggled_gtk_check_menu_item_toggled (GtkCheckMenuItem* _sen
 
 
 void plugin_init (GeanyData* data) {
-	char* _tmp0_;
+	gint* _tmp0_;
 	char* _tmp1_;
+	char* _tmp2_;
+	char* default_theme_dir;
+	char* _tmp3_;
 	struct GeanyDocument* doc;
-	GeanyColorizerUI* _tmp2_;
+	GeanyColorizerUI* _tmp4_;
 	GtkComboBox* cb;
-	GtkComboBox* _tmp8_;
+	GtkComboBox* _tmp10_;
 	GtkMenuShell* menu;
-	GtkMenuItem* _tmp11_;
-	GtkCheckMenuItem* _tmp12_;
+	GtkMenuItem* _tmp13_;
+	GtkCheckMenuItem* _tmp14_;
 	g_return_if_fail (data != NULL);
-	config_dir = (_tmp0_ = g_build_path (G_DIR_SEPARATOR_S, geany_data->app->configdir, "plugins", "colorizer", NULL), _g_free0 (config_dir), _tmp0_);
-	if (!g_file_test (config_dir, G_FILE_TEST_EXISTS | G_FILE_TEST_IS_DIR)) {
-		g_mkdir_with_parents (config_dir, 0700);
-	}
-	config_file = (_tmp1_ = g_build_path (G_DIR_SEPARATOR_S, config_dir, "colorizer.conf", NULL), _g_free0 (config_file), _tmp1_);
+	theme_data = (_tmp0_ = g_new0 (gint, (100 * 33) * 5), theme_data = (g_free (theme_data), NULL), theme_data_length1 = 100, theme_data_length2 = 33, theme_data_length3 = 5, _tmp0_);
+	config_dir = (_tmp1_ = g_build_path (G_DIR_SEPARATOR_S, geany_data->app->configdir, "plugins", "colorizer", NULL), _g_free0 (config_dir), _tmp1_);
+	create_dir (config_dir);
+	theme_dir = (_tmp2_ = g_build_path (G_DIR_SEPARATOR_S, config_dir, "themes", NULL), _g_free0 (theme_dir), _tmp2_);
+	create_dir (theme_dir);
+	default_theme_dir = g_build_path (G_DIR_SEPARATOR_S, theme_dir, "Default", NULL);
+	create_dir (default_theme_dir);
+	config_file = (_tmp3_ = g_build_path (G_DIR_SEPARATOR_S, config_dir, "colorizer.conf", NULL), _g_free0 (config_file), _tmp3_);
 	init_config_file (config_file);
-	g_debug ("colorizer.vala:360: Config file: %s\n", config_file);
+	g_debug ("colorizer.vala:380: Config file: %s\n", config_file);
 	doc = document_get_current ();
 	if (doc != NULL) {
 		sci = (ScintillaObject*) doc->editor->sci;
@@ -755,31 +791,32 @@ void plugin_init (GeanyData* data) {
 	plugin_signal_connect (geany_plugin, NULL, "document-activate", TRUE, (GCallback) on_current_document_changed, NULL);
 	plugin_signal_connect (geany_plugin, NULL, "document-open", TRUE, (GCallback) on_current_document_changed, NULL);
 	plugin_signal_connect (geany_plugin, NULL, "document-new", TRUE, (GCallback) on_current_document_changed, NULL);
-	ui = (_tmp2_ = g_object_ref_sink (geany_colorizer_ui_new ()), _g_object_unref0 (ui), _tmp2_);
+	ui = (_tmp4_ = g_object_ref_sink (geany_colorizer_ui_new (theme_dir)), _g_object_unref0 (ui), _tmp4_);
 	g_signal_connect (ui, "foreground-color-changed", (GCallback) _on_fg_color_changed_geany_colorizer_ui_foreground_color_changed, NULL);
 	g_signal_connect (ui, "background-color-changed", (GCallback) _on_bg_color_changed_geany_colorizer_ui_background_color_changed, NULL);
 	g_signal_connect (ui, "font-bold-toggled", (GCallback) _on_font_bold_toggled_geany_colorizer_ui_font_bold_toggled, NULL);
 	g_signal_connect (ui, "font-italic-toggled", (GCallback) _on_font_italic_toggled_geany_colorizer_ui_font_italic_toggled, NULL);
 	g_signal_connect (ui, "font-underline-toggled", (GCallback) _on_font_underline_toggled_geany_colorizer_ui_font_underline_toggled, NULL);
+	g_signal_connect (ui, "lexer-changed", (GCallback) _on_lexer_changed_geany_colorizer_ui_lexer_changed, NULL);
 	if (in_message_window) {
-		GtkScrolledWindow* _tmp3_;
-		GtkNotebook* _tmp4_;
+		GtkScrolledWindow* _tmp5_;
+		GtkNotebook* _tmp6_;
 		GtkNotebook* nb;
-		swin = (_tmp3_ = g_object_ref_sink ((GtkScrolledWindow*) gtk_scrolled_window_new (NULL, NULL)), _g_object_unref0 (swin), _tmp3_);
+		swin = (_tmp5_ = g_object_ref_sink ((GtkScrolledWindow*) gtk_scrolled_window_new (NULL, NULL)), _g_object_unref0 (swin), _tmp5_);
 		gtk_scrolled_window_set_policy (swin, GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 		gtk_scrolled_window_add_with_viewport (swin, (GtkWidget*) ui);
-		nb = _g_object_ref0 ((_tmp4_ = data->main_widgets->message_window_notebook, GTK_IS_NOTEBOOK (_tmp4_) ? ((GtkNotebook*) _tmp4_) : NULL));
+		nb = _g_object_ref0 ((_tmp6_ = data->main_widgets->message_window_notebook, GTK_IS_NOTEBOOK (_tmp6_) ? ((GtkNotebook*) _tmp6_) : NULL));
 		if (nb != NULL) {
-			GtkLabel* _tmp5_;
-			gtk_notebook_append_page (nb, (GtkWidget*) swin, (GtkWidget*) (_tmp5_ = g_object_ref_sink ((GtkLabel*) gtk_label_new ("Colorizer"))));
-			_g_object_unref0 (_tmp5_);
+			GtkLabel* _tmp7_;
+			gtk_notebook_append_page (nb, (GtkWidget*) swin, (GtkWidget*) (_tmp7_ = g_object_ref_sink ((GtkLabel*) gtk_label_new ("Colorizer"))));
+			_g_object_unref0 (_tmp7_);
 			gtk_widget_hide ((GtkWidget*) swin);
 		}
 		_g_object_unref0 (nb);
 	} else {
-		GtkDialog* _tmp6_;
+		GtkDialog* _tmp8_;
 		GtkBox* box;
-		dialog = (_tmp6_ = g_object_ref_sink ((GtkDialog*) gtk_dialog_new_with_buttons ("Colorizer", GTK_WINDOW (geany_data->main_widgets->window), GTK_DIALOG_DESTROY_WITH_PARENT, GTK_STOCK_CLOSE, GTK_RESPONSE_ACCEPT, NULL)), _g_object_unref0 (dialog), _tmp6_);
+		dialog = (_tmp8_ = g_object_ref_sink ((GtkDialog*) gtk_dialog_new_with_buttons ("Colorizer", GTK_WINDOW (geany_data->main_widgets->window), GTK_DIALOG_DESTROY_WITH_PARENT, GTK_STOCK_CLOSE, GTK_RESPONSE_ACCEPT, NULL)), _g_object_unref0 (dialog), _tmp8_);
 		g_signal_connect ((GtkWidget*) dialog, "delete-event", (GCallback) _on_dialog_delete_gtk_widget_delete_event, NULL);
 		g_signal_connect (dialog, "response", (GCallback) _on_dialog_response_gtk_dialog_response, NULL);
 		box = _g_object_ref0 (GTK_BOX (gtk_dialog_get_content_area (dialog)));
@@ -791,13 +828,13 @@ void plugin_init (GeanyData* data) {
 		gint i;
 		i = 0;
 		{
-			gboolean _tmp7_;
-			_tmp7_ = TRUE;
+			gboolean _tmp9_;
+			_tmp9_ = TRUE;
 			while (TRUE) {
-				if (!_tmp7_) {
+				if (!_tmp9_) {
 					i++;
 				}
-				_tmp7_ = FALSE;
+				_tmp9_ = FALSE;
 				if (!(i < G_N_ELEMENTS (lexer_names))) {
 					break;
 				}
@@ -806,38 +843,39 @@ void plugin_init (GeanyData* data) {
 		}
 	}
 	gtk_combo_box_set_active (geany_colorizer_ui_get_combo_lexer (ui), 1);
-	cb = (_tmp8_ = _g_object_ref0 (geany_colorizer_ui_get_combo_style (ui)), _g_object_unref0 (cb), _tmp8_);
+	cb = (_tmp10_ = _g_object_ref0 (geany_colorizer_ui_get_combo_style (ui)), _g_object_unref0 (cb), _tmp10_);
 	{
 		gint i;
 		i = 0;
 		{
-			gboolean _tmp9_;
-			_tmp9_ = TRUE;
+			gboolean _tmp11_;
+			_tmp11_ = TRUE;
 			while (TRUE) {
-				char* _tmp10_;
-				if (!_tmp9_) {
+				char* _tmp12_;
+				if (!_tmp11_) {
 					i++;
 				}
-				_tmp9_ = FALSE;
+				_tmp11_ = FALSE;
 				if (!(i <= STYLE_DEFAULT)) {
 					break;
 				}
-				gtk_combo_box_append_text (cb, _tmp10_ = g_strdup_printf ("Style #%d", i));
-				_g_free0 (_tmp10_);
+				gtk_combo_box_append_text (cb, _tmp12_ = g_strdup_printf ("Style #%d", i));
+				_g_free0 (_tmp12_);
 			}
 		}
 	}
 	gtk_combo_box_set_active (geany_colorizer_ui_get_combo_style (ui), 0);
 	menu = GTK_MENU_SHELL (geany_data->main_widgets->tools_menu);
-	sep = (_tmp11_ = (GtkMenuItem*) g_object_ref_sink ((GtkSeparatorMenuItem*) gtk_separator_menu_item_new ()), _g_object_unref0 (sep), _tmp11_);
+	sep = (_tmp13_ = (GtkMenuItem*) g_object_ref_sink ((GtkSeparatorMenuItem*) gtk_separator_menu_item_new ()), _g_object_unref0 (sep), _tmp13_);
 	gtk_menu_shell_append (menu, (GtkWidget*) sep);
-	item = (_tmp12_ = g_object_ref_sink ((GtkCheckMenuItem*) gtk_check_menu_item_new_with_label ("Colorizer")), _g_object_unref0 (item), _tmp12_);
+	item = (_tmp14_ = g_object_ref_sink ((GtkCheckMenuItem*) gtk_check_menu_item_new_with_label ("Colorizer")), _g_object_unref0 (item), _tmp14_);
 	g_signal_connect (item, "toggled", (GCallback) _on_open_toggled_gtk_check_menu_item_toggled, NULL);
 	gtk_menu_shell_append (menu, (GtkWidget*) ((GtkMenuItem*) item));
 	gtk_widget_show ((GtkWidget*) item);
 	plugin_module_make_resident (geany_plugin);
 	colorizing = FALSE;
 	_g_object_unref0 (cb);
+	_g_free0 (default_theme_dir);
 }
 
 

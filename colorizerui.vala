@@ -7,6 +7,8 @@ namespace Geany
 	
 	public class ColorizerUI : Gtk.VBox
 	{
+		public string theme_dir;
+		private Gtk.ListStore theme_model;
 		
 		Gtk.ComboBox comboLexer;
 		Gtk.ComboBox comboStyle;
@@ -37,9 +39,48 @@ namespace Geany
 		public signal void font_bold_toggled(bool font_bold);
 		public signal void font_italic_toggled(bool font_italic);
 		public signal void font_underline_toggled(bool font_italic);
+		public signal void theme_changed(string theme_name);
 		
-		public ColorizerUI()
+		private string[] _available_themes;
+		public string[] available_themes
 		{
+			get 
+			{
+				_available_themes = new string[] {};
+				string name;
+				Dir d = Dir.open(theme_dir);
+				while ( (name=d.read_name()) != null ) {
+					_available_themes += name;
+				}
+				return _available_themes;
+			}
+		}
+		
+		private string _current_theme;
+		public string current_theme
+		{
+			get
+			{
+				Gtk.TreeModel model;
+				Gtk.TreeIter iter;
+				Gtk.TreeSelection sel = treeThemes.get_selection();
+				if (sel.get_selected(out model, out iter)) {
+					model.get(iter, 0, out _current_theme);
+				}
+				return _current_theme;
+			}
+		}
+		
+		private void on_tree_row_activated(Gtk.TreePath path, Gtk.TreeViewColumn column)
+		{
+			theme_changed(current_theme);
+		}
+		
+		public ColorizerUI(string themedir)
+		{
+			this.theme_dir = themedir;	
+			_last_lexer = 1;
+			_last_style = 0;
 			init_ui();
 		}
 				
@@ -53,16 +94,32 @@ namespace Geany
 			get { return comboStyle; }
 		}
 		
+		private int _last_lexer;
 		public int current_lexer
 		{
 			get { return comboLexer.get_active(); }
-			set { comboLexer.set_active(value); }
+			set 
+			{
+				if (value != _last_lexer) {
+					lexer_changed(value);
+					_last_lexer = value;
+					comboLexer.set_active(value);
+				} 
+			}
 		}
 		
+		private int _last_style;
 		public int current_style
 		{
 			get { return comboStyle.get_active(); }
-			set { comboStyle.set_active(value); }
+			set 
+			{ 
+				if (value != _last_style) {
+					style_changed(value);
+					_last_style = value; 
+					comboStyle.set_active(value);
+				}
+			}
 		}
 		
 		public int current_foreground_color
@@ -113,12 +170,18 @@ namespace Geany
 		
 		private void on_combo_lexer_changed()
 		{
-			lexer_changed(comboLexer.get_active());
+			if (comboLexer.get_active() != _last_lexer) {
+				lexer_changed(comboLexer.get_active());
+				_last_lexer = comboLexer.get_active();
+			}
 		}
 		
 		private void on_combo_style_changed()
 		{
-			style_changed(comboStyle.get_active());
+			if (comboStyle.get_active() != _last_style) {
+				style_changed(comboStyle.get_active());
+				_last_style = comboStyle.get_active();
+			}
 		}
 		
 		private void on_notebook_page_switched(NotebookPage page, uint page_num)
@@ -158,8 +221,58 @@ namespace Geany
 			font_underline_toggled(checkFontUnderline.get_active());
 		}
 		
+		private void on_new_theme_clicked()
+		{
+			Gtk.Dialog dlg = new Gtk.Dialog.with_buttons("New Theme",
+										null, DialogFlags.MODAL,
+										Gtk.STOCK_OK,
+										Gtk.ResponseType.ACCEPT,
+										Gtk.STOCK_CANCEL,
+										Gtk.ResponseType.REJECT);
+			
+			Gtk.Entry ent = new Gtk.Entry();
+			dlg.vbox.pack_start(ent, true, true, 0);
+			ent.show();
+										
+			if (dlg.run() == Gtk.ResponseType.ACCEPT) {
+				string new_dir = Path.build_path(Path.DIR_SEPARATOR_S, 
+													this.theme_dir, 
+													ent.text);
+				DirUtils.create_with_parents(new_dir, 0700);
+				this.load_themes();
+			}
+			
+			dlg.destroy();
+			
+		}
+		
+		private void on_delete_theme_clicked()
+		{
+			Gtk.MessageDialog dlg = new Gtk.MessageDialog(null,
+											DialogFlags.MODAL,
+											MessageType.QUESTION,
+											ButtonsType.YES_NO,
+											"Are you sure you want to delete the theme '%s'?",
+											current_theme);
+			
+			Gtk.ResponseType res = (Gtk.ResponseType)dlg.run();
+			if (res == Gtk.ResponseType.YES || res == Gtk.ResponseType.ACCEPT) {
+				string del_dir = Path.build_path(Path.DIR_SEPARATOR_S,
+													this.theme_dir,
+													current_theme);
+				DirUtils.remove(del_dir);
+				this.load_themes();
+			}
+			
+			dlg.destroy();
+		}
+		
 		public void connect_signals()
 		{
+			buttonNew.clicked.connect(on_new_theme_clicked);
+			buttonDelete.clicked.connect(on_delete_theme_clicked);
+			treeThemes.row_activated.connect(on_tree_row_activated);
+			
 			comboLexer.changed.connect(on_combo_lexer_changed);
 			comboStyle.changed.connect(on_combo_style_changed);
 			notebookMain.switch_page.connect(on_notebook_page_switched);
@@ -169,6 +282,17 @@ namespace Geany
 			checkFontBold.toggled.connect(on_font_bold_toggled);
 			checkFontItalic.toggled.connect(on_font_italic_toggled);
 			checkFontUnderline.toggled.connect(on_font_underline_toggled);
+		}
+		
+		private void load_themes()
+		{
+			theme_model = new Gtk.ListStore(1, typeof(string));
+			treeThemes.set_model(theme_model);
+			Gtk.TreeIter iter;
+			foreach (string theme in this.available_themes) {
+				theme_model.append(out iter);
+				theme_model.set(iter, 0, theme);
+			}
 		}
 		
 		public void init_ui()
@@ -198,11 +322,22 @@ namespace Geany
 			checkUseCommonBackground.set_active(true);
 			
 			// Themes tab
+			treeThemes = new Gtk.TreeView();
+			treeThemes.set_headers_visible(false);
+			treeThemes.insert_column_with_attributes(-1, "Theme",
+							new Gtk.CellRendererText(), "text", 0);
+			Gtk.TreeViewColumn col = treeThemes.get_column(0);
+			col.sort_column_id = 0;
+			col.sort_order = SortType.ASCENDING;
+			theme_model = new Gtk.ListStore(1, typeof(string));
+			load_themes();
+			
 			Gtk.HBox hbox = new Gtk.HBox(false, 6);
 			hbox.set_border_width(6);
 			Gtk.ScrolledWindow swin = new Gtk.ScrolledWindow(null, null);
 			swin.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC);
 			swin.set_shadow_type(Gtk.ShadowType.ETCHED_IN);
+			swin.add(treeThemes);
 			hbox.pack_start(swin, true, true, 0);
 			Gtk.VButtonBox bb = new Gtk.VButtonBox();
 			bb.set_layout(Gtk.ButtonBoxStyle.START);
