@@ -1,7 +1,6 @@
 using Gtk;
 using Gdk;
 using Pango;
-//using Geany;
 
 namespace Geany
 {
@@ -20,6 +19,12 @@ namespace Geany
 		Gtk.CheckButton checkFontBold;
 		Gtk.CheckButton checkFontItalic;
 		Gtk.CheckButton checkFontUnderline;
+		
+		Gtk.TreeView treeThemes;
+		Gtk.Button buttonNew;
+		Gtk.Button buttonSave;
+		Gtk.Button buttonOpen;
+		Gtk.Button buttonDelete;
 		
 		// Signals passed along from internal widgets
 		public signal void foreground_color_changed(int color);
@@ -178,6 +183,10 @@ namespace Geany
 			checkFontBold = new Gtk.CheckButton.with_label("Bold");
 			checkFontItalic = new Gtk.CheckButton.with_label("Italic");
 			checkFontUnderline = new Gtk.CheckButton.with_label("Underline");
+			
+			buttonNew = new Gtk.Button.from_stock(Gtk.STOCK_NEW);
+			buttonDelete = new Gtk.Button.from_stock(Gtk.STOCK_DELETE);
+			buttonSave = new Gtk.Button.from_stock(Gtk.STOCK_SAVE);
 						
 			colorselForeground.has_opacity_control = false;
 			colorselForeground.has_palette = true;
@@ -188,8 +197,24 @@ namespace Geany
 			
 			checkUseCommonBackground.set_active(true);
 			
-			// Box along the top with lexer and style
+			// Themes tab
 			Gtk.HBox hbox = new Gtk.HBox(false, 6);
+			hbox.set_border_width(6);
+			Gtk.ScrolledWindow swin = new Gtk.ScrolledWindow(null, null);
+			swin.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC);
+			swin.set_shadow_type(Gtk.ShadowType.ETCHED_IN);
+			hbox.pack_start(swin, true, true, 0);
+			Gtk.VButtonBox bb = new Gtk.VButtonBox();
+			bb.set_layout(Gtk.ButtonBoxStyle.START);
+			bb.set_spacing(6);
+			bb.pack_start(buttonNew, true, true, 0);
+			bb.pack_start(buttonDelete, true, true, 0);
+			bb.pack_start(buttonSave, true, true, 0);
+			hbox.pack_start(bb, false, true, 0);
+			notebookMain.append_page(hbox, new Gtk.Label("Themes"));
+			
+			// Box along the top with lexer and style
+			hbox = new Gtk.HBox(false, 6);
 			hbox.pack_start(new Gtk.Label("Lexer:"), false, true, 0);
 			hbox.pack_start(comboLexer, true, true, 0);
 			hbox.pack_start(new Gtk.Label("Style:"), false, true, 0);
