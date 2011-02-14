@@ -9,31 +9,30 @@
 #include <float.h>
 #include <math.h>
 #include <string.h>
-#include <stdlib.h>
 
 
-#define GEANY_TYPE_FACELIFT_UI (geany_facelift_ui_get_type ())
-#define GEANY_FACELIFT_UI(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), GEANY_TYPE_FACELIFT_UI, GeanyFaceliftUI))
-#define GEANY_FACELIFT_UI_CLASS(klass) (G_TYPE_CHECK_CLASS_CAST ((klass), GEANY_TYPE_FACELIFT_UI, GeanyFaceliftUIClass))
-#define GEANY_IS_FACELIFT_UI(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GEANY_TYPE_FACELIFT_UI))
-#define GEANY_IS_FACELIFT_UI_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GEANY_TYPE_FACELIFT_UI))
-#define GEANY_FACELIFT_UI_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), GEANY_TYPE_FACELIFT_UI, GeanyFaceliftUIClass))
+#define GEANY_TYPE_COLORIZER_UI (geany_colorizer_ui_get_type ())
+#define GEANY_COLORIZER_UI(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), GEANY_TYPE_COLORIZER_UI, GeanyColorizerUI))
+#define GEANY_COLORIZER_UI_CLASS(klass) (G_TYPE_CHECK_CLASS_CAST ((klass), GEANY_TYPE_COLORIZER_UI, GeanyColorizerUIClass))
+#define GEANY_IS_COLORIZER_UI(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GEANY_TYPE_COLORIZER_UI))
+#define GEANY_IS_COLORIZER_UI_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GEANY_TYPE_COLORIZER_UI))
+#define GEANY_COLORIZER_UI_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), GEANY_TYPE_COLORIZER_UI, GeanyColorizerUIClass))
 
-typedef struct _GeanyFaceliftUI GeanyFaceliftUI;
-typedef struct _GeanyFaceliftUIClass GeanyFaceliftUIClass;
-typedef struct _GeanyFaceliftUIPrivate GeanyFaceliftUIPrivate;
+typedef struct _GeanyColorizerUI GeanyColorizerUI;
+typedef struct _GeanyColorizerUIClass GeanyColorizerUIClass;
+typedef struct _GeanyColorizerUIPrivate GeanyColorizerUIPrivate;
 #define _g_object_unref0(var) ((var == NULL) ? NULL : (var = (g_object_unref (var), NULL)))
 
-struct _GeanyFaceliftUI {
+struct _GeanyColorizerUI {
 	GtkVBox parent_instance;
-	GeanyFaceliftUIPrivate * priv;
+	GeanyColorizerUIPrivate * priv;
 };
 
-struct _GeanyFaceliftUIClass {
+struct _GeanyColorizerUIClass {
 	GtkVBoxClass parent_class;
 };
 
-struct _GeanyFaceliftUIPrivate {
+struct _GeanyColorizerUIPrivate {
 	GtkComboBox* comboLexer;
 	GtkComboBox* comboStyle;
 	GtkNotebook* notebookMain;
@@ -46,206 +45,204 @@ struct _GeanyFaceliftUIPrivate {
 };
 
 
-static gpointer geany_facelift_ui_parent_class = NULL;
+static gpointer geany_colorizer_ui_parent_class = NULL;
 
-GType geany_facelift_ui_get_type (void) G_GNUC_CONST;
-#define GEANY_FACELIFT_UI_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), GEANY_TYPE_FACELIFT_UI, GeanyFaceliftUIPrivate))
+GType geany_colorizer_ui_get_type (void) G_GNUC_CONST;
+#define GEANY_COLORIZER_UI_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), GEANY_TYPE_COLORIZER_UI, GeanyColorizerUIPrivate))
 enum  {
-	GEANY_FACELIFT_UI_DUMMY_PROPERTY,
-	GEANY_FACELIFT_UI_COMBO_LEXER,
-	GEANY_FACELIFT_UI_COMBO_STYLE,
-	GEANY_FACELIFT_UI_CURRENT_LEXER,
-	GEANY_FACELIFT_UI_CURRENT_STYLE,
-	GEANY_FACELIFT_UI_CURRENT_FOREGROUND_COLOR,
-	GEANY_FACELIFT_UI_CURRENT_BACKGROUND_COLOR,
-	GEANY_FACELIFT_UI_FONT_BOLD,
-	GEANY_FACELIFT_UI_FONT_ITALIC,
-	GEANY_FACELIFT_UI_FONT_UNDERLINE,
-	GEANY_FACELIFT_UI_USE_COMMON_BACKGROUND
+	GEANY_COLORIZER_UI_DUMMY_PROPERTY,
+	GEANY_COLORIZER_UI_COMBO_LEXER,
+	GEANY_COLORIZER_UI_COMBO_STYLE,
+	GEANY_COLORIZER_UI_CURRENT_LEXER,
+	GEANY_COLORIZER_UI_CURRENT_STYLE,
+	GEANY_COLORIZER_UI_CURRENT_FOREGROUND_COLOR,
+	GEANY_COLORIZER_UI_CURRENT_BACKGROUND_COLOR,
+	GEANY_COLORIZER_UI_FONT_BOLD,
+	GEANY_COLORIZER_UI_FONT_ITALIC,
+	GEANY_COLORIZER_UI_FONT_UNDERLINE,
+	GEANY_COLORIZER_UI_USE_COMMON_BACKGROUND
 };
-GeanyFaceliftUI* geany_facelift_ui_new (void);
-GeanyFaceliftUI* geany_facelift_ui_construct (GType object_type);
-void geany_facelift_ui_init_ui (GeanyFaceliftUI* self);
-static void geany_facelift_ui_on_combo_lexer_changed (GeanyFaceliftUI* self);
-static void geany_facelift_ui_on_combo_style_changed (GeanyFaceliftUI* self);
-static void geany_facelift_ui_on_notebook_page_switched (GeanyFaceliftUI* self, GtkNotebookPage* page, guint page_num);
-static void geany_facelift_ui_on_fg_color_changed (GeanyFaceliftUI* self);
-gint geany_facelift_ui_int_from_color (GdkColor* c);
-static void geany_facelift_ui_on_bg_color_changed (GeanyFaceliftUI* self);
-static void geany_facelift_ui_on_use_common_bg_color_toggled (GeanyFaceliftUI* self);
-static void geany_facelift_ui_on_font_bold_toggled (GeanyFaceliftUI* self);
-static void geany_facelift_ui_on_font_italic_toggled (GeanyFaceliftUI* self);
-static void geany_facelift_ui_on_font_underline_toggled (GeanyFaceliftUI* self);
-void geany_facelift_ui_connect_signals (GeanyFaceliftUI* self);
-static void _geany_facelift_ui_on_combo_lexer_changed_gtk_combo_box_changed (GtkComboBox* _sender, gpointer self);
-static void _geany_facelift_ui_on_combo_style_changed_gtk_combo_box_changed (GtkComboBox* _sender, gpointer self);
-static void _geany_facelift_ui_on_notebook_page_switched_gtk_notebook_switch_page (GtkNotebook* _sender, GtkNotebookPage* page, guint page_num, gpointer self);
-static void _geany_facelift_ui_on_fg_color_changed_gtk_color_selection_color_changed (GtkColorSelection* _sender, gpointer self);
-static void _geany_facelift_ui_on_bg_color_changed_gtk_color_selection_color_changed (GtkColorSelection* _sender, gpointer self);
-static void _geany_facelift_ui_on_use_common_bg_color_toggled_gtk_toggle_button_toggled (GtkToggleButton* _sender, gpointer self);
-static void _geany_facelift_ui_on_font_bold_toggled_gtk_toggle_button_toggled (GtkToggleButton* _sender, gpointer self);
-static void _geany_facelift_ui_on_font_italic_toggled_gtk_toggle_button_toggled (GtkToggleButton* _sender, gpointer self);
-static void _geany_facelift_ui_on_font_underline_toggled_gtk_toggle_button_toggled (GtkToggleButton* _sender, gpointer self);
-static double geany_facelift_ui_scale_round (double val, double factor);
-void geany_facelift_ui_color_from_int (gint color, GdkColor* result);
-GtkComboBox* geany_facelift_ui_get_combo_lexer (GeanyFaceliftUI* self);
-GtkComboBox* geany_facelift_ui_get_combo_style (GeanyFaceliftUI* self);
-gint geany_facelift_ui_get_current_lexer (GeanyFaceliftUI* self);
-void geany_facelift_ui_set_current_lexer (GeanyFaceliftUI* self, gint value);
-gint geany_facelift_ui_get_current_style (GeanyFaceliftUI* self);
-void geany_facelift_ui_set_current_style (GeanyFaceliftUI* self, gint value);
-gint geany_facelift_ui_get_current_foreground_color (GeanyFaceliftUI* self);
-void geany_facelift_ui_set_current_foreground_color (GeanyFaceliftUI* self, gint value);
-gint geany_facelift_ui_get_current_background_color (GeanyFaceliftUI* self);
-void geany_facelift_ui_set_current_background_color (GeanyFaceliftUI* self, gint value);
-gboolean geany_facelift_ui_get_font_bold (GeanyFaceliftUI* self);
-void geany_facelift_ui_set_font_bold (GeanyFaceliftUI* self, gboolean value);
-gboolean geany_facelift_ui_get_font_italic (GeanyFaceliftUI* self);
-void geany_facelift_ui_set_font_italic (GeanyFaceliftUI* self, gboolean value);
-gboolean geany_facelift_ui_get_font_underline (GeanyFaceliftUI* self);
-void geany_facelift_ui_set_font_underline (GeanyFaceliftUI* self, gboolean value);
-gboolean geany_facelift_ui_get_use_common_background (GeanyFaceliftUI* self);
-void geany_facelift_ui_set_use_common_background (GeanyFaceliftUI* self, gboolean value);
-static void geany_facelift_ui_finalize (GObject* obj);
-static void geany_facelift_ui_get_property (GObject * object, guint property_id, GValue * value, GParamSpec * pspec);
-static void geany_facelift_ui_set_property (GObject * object, guint property_id, const GValue * value, GParamSpec * pspec);
-gint geany_main (char** args, int args_length1);
-static void _gtk_main_quit_gtk_object_destroy (GtkObject* _sender, gpointer self);
+GeanyColorizerUI* geany_colorizer_ui_new (void);
+GeanyColorizerUI* geany_colorizer_ui_construct (GType object_type);
+void geany_colorizer_ui_init_ui (GeanyColorizerUI* self);
+static void geany_colorizer_ui_on_combo_lexer_changed (GeanyColorizerUI* self);
+static void geany_colorizer_ui_on_combo_style_changed (GeanyColorizerUI* self);
+static void geany_colorizer_ui_on_notebook_page_switched (GeanyColorizerUI* self, GtkNotebookPage* page, guint page_num);
+static void geany_colorizer_ui_on_fg_color_changed (GeanyColorizerUI* self);
+gint geany_colorizer_ui_int_from_color (GdkColor* c);
+static void geany_colorizer_ui_on_bg_color_changed (GeanyColorizerUI* self);
+static void geany_colorizer_ui_on_use_common_bg_color_toggled (GeanyColorizerUI* self);
+static void geany_colorizer_ui_on_font_bold_toggled (GeanyColorizerUI* self);
+static void geany_colorizer_ui_on_font_italic_toggled (GeanyColorizerUI* self);
+static void geany_colorizer_ui_on_font_underline_toggled (GeanyColorizerUI* self);
+void geany_colorizer_ui_connect_signals (GeanyColorizerUI* self);
+static void _geany_colorizer_ui_on_combo_lexer_changed_gtk_combo_box_changed (GtkComboBox* _sender, gpointer self);
+static void _geany_colorizer_ui_on_combo_style_changed_gtk_combo_box_changed (GtkComboBox* _sender, gpointer self);
+static void _geany_colorizer_ui_on_notebook_page_switched_gtk_notebook_switch_page (GtkNotebook* _sender, GtkNotebookPage* page, guint page_num, gpointer self);
+static void _geany_colorizer_ui_on_fg_color_changed_gtk_color_selection_color_changed (GtkColorSelection* _sender, gpointer self);
+static void _geany_colorizer_ui_on_bg_color_changed_gtk_color_selection_color_changed (GtkColorSelection* _sender, gpointer self);
+static void _geany_colorizer_ui_on_use_common_bg_color_toggled_gtk_toggle_button_toggled (GtkToggleButton* _sender, gpointer self);
+static void _geany_colorizer_ui_on_font_bold_toggled_gtk_toggle_button_toggled (GtkToggleButton* _sender, gpointer self);
+static void _geany_colorizer_ui_on_font_italic_toggled_gtk_toggle_button_toggled (GtkToggleButton* _sender, gpointer self);
+static void _geany_colorizer_ui_on_font_underline_toggled_gtk_toggle_button_toggled (GtkToggleButton* _sender, gpointer self);
+static double geany_colorizer_ui_scale_round (double val, double factor);
+void geany_colorizer_ui_color_from_int (gint color, GdkColor* result);
+GtkComboBox* geany_colorizer_ui_get_combo_lexer (GeanyColorizerUI* self);
+GtkComboBox* geany_colorizer_ui_get_combo_style (GeanyColorizerUI* self);
+gint geany_colorizer_ui_get_current_lexer (GeanyColorizerUI* self);
+void geany_colorizer_ui_set_current_lexer (GeanyColorizerUI* self, gint value);
+gint geany_colorizer_ui_get_current_style (GeanyColorizerUI* self);
+void geany_colorizer_ui_set_current_style (GeanyColorizerUI* self, gint value);
+gint geany_colorizer_ui_get_current_foreground_color (GeanyColorizerUI* self);
+void geany_colorizer_ui_set_current_foreground_color (GeanyColorizerUI* self, gint value);
+gint geany_colorizer_ui_get_current_background_color (GeanyColorizerUI* self);
+void geany_colorizer_ui_set_current_background_color (GeanyColorizerUI* self, gint value);
+gboolean geany_colorizer_ui_get_font_bold (GeanyColorizerUI* self);
+void geany_colorizer_ui_set_font_bold (GeanyColorizerUI* self, gboolean value);
+gboolean geany_colorizer_ui_get_font_italic (GeanyColorizerUI* self);
+void geany_colorizer_ui_set_font_italic (GeanyColorizerUI* self, gboolean value);
+gboolean geany_colorizer_ui_get_font_underline (GeanyColorizerUI* self);
+void geany_colorizer_ui_set_font_underline (GeanyColorizerUI* self, gboolean value);
+gboolean geany_colorizer_ui_get_use_common_background (GeanyColorizerUI* self);
+void geany_colorizer_ui_set_use_common_background (GeanyColorizerUI* self, gboolean value);
+static void geany_colorizer_ui_finalize (GObject* obj);
+static void geany_colorizer_ui_get_property (GObject * object, guint property_id, GValue * value, GParamSpec * pspec);
+static void geany_colorizer_ui_set_property (GObject * object, guint property_id, const GValue * value, GParamSpec * pspec);
 
 
 
-GeanyFaceliftUI* geany_facelift_ui_construct (GType object_type) {
-	GeanyFaceliftUI * self;
+GeanyColorizerUI* geany_colorizer_ui_construct (GType object_type) {
+	GeanyColorizerUI * self;
 	self = g_object_newv (object_type, 0, NULL);
-	geany_facelift_ui_init_ui (self);
+	geany_colorizer_ui_init_ui (self);
 	return self;
 }
 
 
-GeanyFaceliftUI* geany_facelift_ui_new (void) {
-	return geany_facelift_ui_construct (GEANY_TYPE_FACELIFT_UI);
+GeanyColorizerUI* geany_colorizer_ui_new (void) {
+	return geany_colorizer_ui_construct (GEANY_TYPE_COLORIZER_UI);
 }
 
 
-static void geany_facelift_ui_on_combo_lexer_changed (GeanyFaceliftUI* self) {
+static void geany_colorizer_ui_on_combo_lexer_changed (GeanyColorizerUI* self) {
 	g_return_if_fail (self != NULL);
 	g_signal_emit_by_name (self, "lexer-changed", gtk_combo_box_get_active (self->priv->comboLexer));
 }
 
 
-static void geany_facelift_ui_on_combo_style_changed (GeanyFaceliftUI* self) {
+static void geany_colorizer_ui_on_combo_style_changed (GeanyColorizerUI* self) {
 	g_return_if_fail (self != NULL);
 	g_signal_emit_by_name (self, "style-changed", gtk_combo_box_get_active (self->priv->comboStyle));
 }
 
 
-static void geany_facelift_ui_on_notebook_page_switched (GeanyFaceliftUI* self, GtkNotebookPage* page, guint page_num) {
+static void geany_colorizer_ui_on_notebook_page_switched (GeanyColorizerUI* self, GtkNotebookPage* page, guint page_num) {
 	g_return_if_fail (self != NULL);
 	g_return_if_fail (page != NULL);
 	g_signal_emit_by_name (self, "notebook-page-switched", (gint) page_num);
 }
 
 
-static void geany_facelift_ui_on_fg_color_changed (GeanyFaceliftUI* self) {
+static void geany_colorizer_ui_on_fg_color_changed (GeanyColorizerUI* self) {
 	GdkColor _tmp0_ = {0};
 	GdkColor _tmp1_;
 	g_return_if_fail (self != NULL);
-	g_signal_emit_by_name (self, "foreground-color-changed", geany_facelift_ui_int_from_color ((_tmp1_ = (gtk_color_selection_get_current_color (self->priv->colorselForeground, &_tmp0_), _tmp0_), &_tmp1_)));
+	g_signal_emit_by_name (self, "foreground-color-changed", geany_colorizer_ui_int_from_color ((_tmp1_ = (gtk_color_selection_get_current_color (self->priv->colorselForeground, &_tmp0_), _tmp0_), &_tmp1_)));
 }
 
 
-static void geany_facelift_ui_on_bg_color_changed (GeanyFaceliftUI* self) {
+static void geany_colorizer_ui_on_bg_color_changed (GeanyColorizerUI* self) {
 	GdkColor _tmp0_ = {0};
 	GdkColor _tmp1_;
 	g_return_if_fail (self != NULL);
-	g_signal_emit_by_name (self, "background-color-changed", geany_facelift_ui_int_from_color ((_tmp1_ = (gtk_color_selection_get_current_color (self->priv->colorselBackground, &_tmp0_), _tmp0_), &_tmp1_)));
+	g_signal_emit_by_name (self, "background-color-changed", geany_colorizer_ui_int_from_color ((_tmp1_ = (gtk_color_selection_get_current_color (self->priv->colorselBackground, &_tmp0_), _tmp0_), &_tmp1_)));
 }
 
 
-static void geany_facelift_ui_on_use_common_bg_color_toggled (GeanyFaceliftUI* self) {
+static void geany_colorizer_ui_on_use_common_bg_color_toggled (GeanyColorizerUI* self) {
 	g_return_if_fail (self != NULL);
 	g_signal_emit_by_name (self, "use-common-bg-color-toggled", gtk_toggle_button_get_active ((GtkToggleButton*) self->priv->checkUseCommonBackground));
 }
 
 
-static void geany_facelift_ui_on_font_bold_toggled (GeanyFaceliftUI* self) {
+static void geany_colorizer_ui_on_font_bold_toggled (GeanyColorizerUI* self) {
 	g_return_if_fail (self != NULL);
 	g_signal_emit_by_name (self, "font-bold-toggled", gtk_toggle_button_get_active ((GtkToggleButton*) self->priv->checkFontBold));
 }
 
 
-static void geany_facelift_ui_on_font_italic_toggled (GeanyFaceliftUI* self) {
+static void geany_colorizer_ui_on_font_italic_toggled (GeanyColorizerUI* self) {
 	g_return_if_fail (self != NULL);
 	g_signal_emit_by_name (self, "font-italic-toggled", gtk_toggle_button_get_active ((GtkToggleButton*) self->priv->checkFontItalic));
 }
 
 
-static void geany_facelift_ui_on_font_underline_toggled (GeanyFaceliftUI* self) {
+static void geany_colorizer_ui_on_font_underline_toggled (GeanyColorizerUI* self) {
 	g_return_if_fail (self != NULL);
 	g_signal_emit_by_name (self, "font-underline-toggled", gtk_toggle_button_get_active ((GtkToggleButton*) self->priv->checkFontUnderline));
 }
 
 
-static void _geany_facelift_ui_on_combo_lexer_changed_gtk_combo_box_changed (GtkComboBox* _sender, gpointer self) {
-	geany_facelift_ui_on_combo_lexer_changed (self);
+static void _geany_colorizer_ui_on_combo_lexer_changed_gtk_combo_box_changed (GtkComboBox* _sender, gpointer self) {
+	geany_colorizer_ui_on_combo_lexer_changed (self);
 }
 
 
-static void _geany_facelift_ui_on_combo_style_changed_gtk_combo_box_changed (GtkComboBox* _sender, gpointer self) {
-	geany_facelift_ui_on_combo_style_changed (self);
+static void _geany_colorizer_ui_on_combo_style_changed_gtk_combo_box_changed (GtkComboBox* _sender, gpointer self) {
+	geany_colorizer_ui_on_combo_style_changed (self);
 }
 
 
-static void _geany_facelift_ui_on_notebook_page_switched_gtk_notebook_switch_page (GtkNotebook* _sender, GtkNotebookPage* page, guint page_num, gpointer self) {
-	geany_facelift_ui_on_notebook_page_switched (self, page, page_num);
+static void _geany_colorizer_ui_on_notebook_page_switched_gtk_notebook_switch_page (GtkNotebook* _sender, GtkNotebookPage* page, guint page_num, gpointer self) {
+	geany_colorizer_ui_on_notebook_page_switched (self, page, page_num);
 }
 
 
-static void _geany_facelift_ui_on_fg_color_changed_gtk_color_selection_color_changed (GtkColorSelection* _sender, gpointer self) {
-	geany_facelift_ui_on_fg_color_changed (self);
+static void _geany_colorizer_ui_on_fg_color_changed_gtk_color_selection_color_changed (GtkColorSelection* _sender, gpointer self) {
+	geany_colorizer_ui_on_fg_color_changed (self);
 }
 
 
-static void _geany_facelift_ui_on_bg_color_changed_gtk_color_selection_color_changed (GtkColorSelection* _sender, gpointer self) {
-	geany_facelift_ui_on_bg_color_changed (self);
+static void _geany_colorizer_ui_on_bg_color_changed_gtk_color_selection_color_changed (GtkColorSelection* _sender, gpointer self) {
+	geany_colorizer_ui_on_bg_color_changed (self);
 }
 
 
-static void _geany_facelift_ui_on_use_common_bg_color_toggled_gtk_toggle_button_toggled (GtkToggleButton* _sender, gpointer self) {
-	geany_facelift_ui_on_use_common_bg_color_toggled (self);
+static void _geany_colorizer_ui_on_use_common_bg_color_toggled_gtk_toggle_button_toggled (GtkToggleButton* _sender, gpointer self) {
+	geany_colorizer_ui_on_use_common_bg_color_toggled (self);
 }
 
 
-static void _geany_facelift_ui_on_font_bold_toggled_gtk_toggle_button_toggled (GtkToggleButton* _sender, gpointer self) {
-	geany_facelift_ui_on_font_bold_toggled (self);
+static void _geany_colorizer_ui_on_font_bold_toggled_gtk_toggle_button_toggled (GtkToggleButton* _sender, gpointer self) {
+	geany_colorizer_ui_on_font_bold_toggled (self);
 }
 
 
-static void _geany_facelift_ui_on_font_italic_toggled_gtk_toggle_button_toggled (GtkToggleButton* _sender, gpointer self) {
-	geany_facelift_ui_on_font_italic_toggled (self);
+static void _geany_colorizer_ui_on_font_italic_toggled_gtk_toggle_button_toggled (GtkToggleButton* _sender, gpointer self) {
+	geany_colorizer_ui_on_font_italic_toggled (self);
 }
 
 
-static void _geany_facelift_ui_on_font_underline_toggled_gtk_toggle_button_toggled (GtkToggleButton* _sender, gpointer self) {
-	geany_facelift_ui_on_font_underline_toggled (self);
+static void _geany_colorizer_ui_on_font_underline_toggled_gtk_toggle_button_toggled (GtkToggleButton* _sender, gpointer self) {
+	geany_colorizer_ui_on_font_underline_toggled (self);
 }
 
 
-void geany_facelift_ui_connect_signals (GeanyFaceliftUI* self) {
+void geany_colorizer_ui_connect_signals (GeanyColorizerUI* self) {
 	g_return_if_fail (self != NULL);
-	g_signal_connect_object (self->priv->comboLexer, "changed", (GCallback) _geany_facelift_ui_on_combo_lexer_changed_gtk_combo_box_changed, self, 0);
-	g_signal_connect_object (self->priv->comboStyle, "changed", (GCallback) _geany_facelift_ui_on_combo_style_changed_gtk_combo_box_changed, self, 0);
-	g_signal_connect_object (self->priv->notebookMain, "switch-page", (GCallback) _geany_facelift_ui_on_notebook_page_switched_gtk_notebook_switch_page, self, 0);
-	g_signal_connect_object (self->priv->colorselForeground, "color-changed", (GCallback) _geany_facelift_ui_on_fg_color_changed_gtk_color_selection_color_changed, self, 0);
-	g_signal_connect_object (self->priv->colorselBackground, "color-changed", (GCallback) _geany_facelift_ui_on_bg_color_changed_gtk_color_selection_color_changed, self, 0);
-	g_signal_connect_object ((GtkToggleButton*) self->priv->checkUseCommonBackground, "toggled", (GCallback) _geany_facelift_ui_on_use_common_bg_color_toggled_gtk_toggle_button_toggled, self, 0);
-	g_signal_connect_object ((GtkToggleButton*) self->priv->checkFontBold, "toggled", (GCallback) _geany_facelift_ui_on_font_bold_toggled_gtk_toggle_button_toggled, self, 0);
-	g_signal_connect_object ((GtkToggleButton*) self->priv->checkFontItalic, "toggled", (GCallback) _geany_facelift_ui_on_font_italic_toggled_gtk_toggle_button_toggled, self, 0);
-	g_signal_connect_object ((GtkToggleButton*) self->priv->checkFontUnderline, "toggled", (GCallback) _geany_facelift_ui_on_font_underline_toggled_gtk_toggle_button_toggled, self, 0);
+	g_signal_connect_object (self->priv->comboLexer, "changed", (GCallback) _geany_colorizer_ui_on_combo_lexer_changed_gtk_combo_box_changed, self, 0);
+	g_signal_connect_object (self->priv->comboStyle, "changed", (GCallback) _geany_colorizer_ui_on_combo_style_changed_gtk_combo_box_changed, self, 0);
+	g_signal_connect_object (self->priv->notebookMain, "switch-page", (GCallback) _geany_colorizer_ui_on_notebook_page_switched_gtk_notebook_switch_page, self, 0);
+	g_signal_connect_object (self->priv->colorselForeground, "color-changed", (GCallback) _geany_colorizer_ui_on_fg_color_changed_gtk_color_selection_color_changed, self, 0);
+	g_signal_connect_object (self->priv->colorselBackground, "color-changed", (GCallback) _geany_colorizer_ui_on_bg_color_changed_gtk_color_selection_color_changed, self, 0);
+	g_signal_connect_object ((GtkToggleButton*) self->priv->checkUseCommonBackground, "toggled", (GCallback) _geany_colorizer_ui_on_use_common_bg_color_toggled_gtk_toggle_button_toggled, self, 0);
+	g_signal_connect_object ((GtkToggleButton*) self->priv->checkFontBold, "toggled", (GCallback) _geany_colorizer_ui_on_font_bold_toggled_gtk_toggle_button_toggled, self, 0);
+	g_signal_connect_object ((GtkToggleButton*) self->priv->checkFontItalic, "toggled", (GCallback) _geany_colorizer_ui_on_font_italic_toggled_gtk_toggle_button_toggled, self, 0);
+	g_signal_connect_object ((GtkToggleButton*) self->priv->checkFontUnderline, "toggled", (GCallback) _geany_colorizer_ui_on_font_underline_toggled_gtk_toggle_button_toggled, self, 0);
 }
 
 
-void geany_facelift_ui_init_ui (GeanyFaceliftUI* self) {
+void geany_colorizer_ui_init_ui (GeanyColorizerUI* self) {
 	GtkComboBox* _tmp0_;
 	GtkComboBox* _tmp1_;
 	GtkNotebook* _tmp2_;
@@ -323,26 +320,26 @@ void geany_facelift_ui_init_ui (GeanyFaceliftUI* self) {
 	gtk_container_set_border_width ((GtkContainer*) self, (guint) 6);
 	gtk_box_set_spacing ((GtkBox*) self, 6);
 	gtk_widget_show_all ((GtkWidget*) self);
-	geany_facelift_ui_connect_signals (self);
+	geany_colorizer_ui_connect_signals (self);
 	_g_object_unref0 (vbox);
 	_g_object_unref0 (hbox);
 }
 
 
-gint geany_facelift_ui_int_from_color (GdkColor* c) {
+gint geany_colorizer_ui_int_from_color (GdkColor* c) {
 	gint result = 0;
 	gint r;
 	gint g;
 	gint b;
-	r = (gint) geany_facelift_ui_scale_round ((double) ((*c).red / 256), (double) 255);
-	g = (gint) geany_facelift_ui_scale_round ((double) ((*c).green / 256), (double) 255);
-	b = (gint) geany_facelift_ui_scale_round ((double) ((*c).blue / 256), (double) 255);
+	r = (gint) geany_colorizer_ui_scale_round ((double) ((*c).red / 256), (double) 255);
+	g = (gint) geany_colorizer_ui_scale_round ((double) ((*c).green / 256), (double) 255);
+	b = (gint) geany_colorizer_ui_scale_round ((double) ((*c).blue / 256), (double) 255);
 	result = ((b * 65536) + (g * 256)) + r;
 	return result;
 }
 
 
-static double geany_facelift_ui_scale_round (double val, double factor) {
+static double geany_colorizer_ui_scale_round (double val, double factor) {
 	double result = 0.0;
 	val = floor (val);
 	val = fmax (val, (double) 0);
@@ -352,7 +349,7 @@ static double geany_facelift_ui_scale_round (double val, double factor) {
 }
 
 
-void geany_facelift_ui_color_from_int (gint color, GdkColor* result) {
+void geany_colorizer_ui_color_from_int (gint color, GdkColor* result) {
 	GdkColor c = {0};
 	gint r;
 	gint g;
@@ -369,7 +366,7 @@ void geany_facelift_ui_color_from_int (gint color, GdkColor* result) {
 }
 
 
-GtkComboBox* geany_facelift_ui_get_combo_lexer (GeanyFaceliftUI* self) {
+GtkComboBox* geany_colorizer_ui_get_combo_lexer (GeanyColorizerUI* self) {
 	GtkComboBox* result;
 	g_return_val_if_fail (self != NULL, NULL);
 	result = self->priv->comboLexer;
@@ -377,7 +374,7 @@ GtkComboBox* geany_facelift_ui_get_combo_lexer (GeanyFaceliftUI* self) {
 }
 
 
-GtkComboBox* geany_facelift_ui_get_combo_style (GeanyFaceliftUI* self) {
+GtkComboBox* geany_colorizer_ui_get_combo_style (GeanyColorizerUI* self) {
 	GtkComboBox* result;
 	g_return_val_if_fail (self != NULL, NULL);
 	result = self->priv->comboStyle;
@@ -385,7 +382,7 @@ GtkComboBox* geany_facelift_ui_get_combo_style (GeanyFaceliftUI* self) {
 }
 
 
-gint geany_facelift_ui_get_current_lexer (GeanyFaceliftUI* self) {
+gint geany_colorizer_ui_get_current_lexer (GeanyColorizerUI* self) {
 	gint result;
 	g_return_val_if_fail (self != NULL, 0);
 	result = gtk_combo_box_get_active (self->priv->comboLexer);
@@ -393,14 +390,14 @@ gint geany_facelift_ui_get_current_lexer (GeanyFaceliftUI* self) {
 }
 
 
-void geany_facelift_ui_set_current_lexer (GeanyFaceliftUI* self, gint value) {
+void geany_colorizer_ui_set_current_lexer (GeanyColorizerUI* self, gint value) {
 	g_return_if_fail (self != NULL);
 	gtk_combo_box_set_active (self->priv->comboLexer, value);
 	g_object_notify ((GObject *) self, "current-lexer");
 }
 
 
-gint geany_facelift_ui_get_current_style (GeanyFaceliftUI* self) {
+gint geany_colorizer_ui_get_current_style (GeanyColorizerUI* self) {
 	gint result;
 	g_return_val_if_fail (self != NULL, 0);
 	result = gtk_combo_box_get_active (self->priv->comboStyle);
@@ -408,58 +405,58 @@ gint geany_facelift_ui_get_current_style (GeanyFaceliftUI* self) {
 }
 
 
-void geany_facelift_ui_set_current_style (GeanyFaceliftUI* self, gint value) {
+void geany_colorizer_ui_set_current_style (GeanyColorizerUI* self, gint value) {
 	g_return_if_fail (self != NULL);
 	gtk_combo_box_set_active (self->priv->comboStyle, value);
 	g_object_notify ((GObject *) self, "current-style");
 }
 
 
-gint geany_facelift_ui_get_current_foreground_color (GeanyFaceliftUI* self) {
+gint geany_colorizer_ui_get_current_foreground_color (GeanyColorizerUI* self) {
 	gint result;
 	GdkColor _tmp0_ = {0};
 	GdkColor _tmp1_;
 	g_return_val_if_fail (self != NULL, 0);
-	result = geany_facelift_ui_int_from_color ((_tmp1_ = (gtk_color_selection_get_current_color (self->priv->colorselForeground, &_tmp0_), _tmp0_), &_tmp1_));
+	result = geany_colorizer_ui_int_from_color ((_tmp1_ = (gtk_color_selection_get_current_color (self->priv->colorselForeground, &_tmp0_), _tmp0_), &_tmp1_));
 	return result;
 }
 
 
-void geany_facelift_ui_set_current_foreground_color (GeanyFaceliftUI* self, gint value) {
+void geany_colorizer_ui_set_current_foreground_color (GeanyColorizerUI* self, gint value) {
 	gint int_color;
 	GdkColor _tmp0_ = {0};
 	GdkColor clr;
 	g_return_if_fail (self != NULL);
 	int_color = value;
-	clr = (geany_facelift_ui_color_from_int (int_color, &_tmp0_), _tmp0_);
+	clr = (geany_colorizer_ui_color_from_int (int_color, &_tmp0_), _tmp0_);
 	gtk_color_selection_set_current_color (self->priv->colorselForeground, &clr);
 	g_object_notify ((GObject *) self, "current-foreground-color");
 }
 
 
-gint geany_facelift_ui_get_current_background_color (GeanyFaceliftUI* self) {
+gint geany_colorizer_ui_get_current_background_color (GeanyColorizerUI* self) {
 	gint result;
 	GdkColor _tmp0_ = {0};
 	GdkColor _tmp1_;
 	g_return_val_if_fail (self != NULL, 0);
-	result = geany_facelift_ui_int_from_color ((_tmp1_ = (gtk_color_selection_get_current_color (self->priv->colorselBackground, &_tmp0_), _tmp0_), &_tmp1_));
+	result = geany_colorizer_ui_int_from_color ((_tmp1_ = (gtk_color_selection_get_current_color (self->priv->colorselBackground, &_tmp0_), _tmp0_), &_tmp1_));
 	return result;
 }
 
 
-void geany_facelift_ui_set_current_background_color (GeanyFaceliftUI* self, gint value) {
+void geany_colorizer_ui_set_current_background_color (GeanyColorizerUI* self, gint value) {
 	gint int_color;
 	GdkColor _tmp0_ = {0};
 	GdkColor clr;
 	g_return_if_fail (self != NULL);
 	int_color = value;
-	clr = (geany_facelift_ui_color_from_int (int_color, &_tmp0_), _tmp0_);
+	clr = (geany_colorizer_ui_color_from_int (int_color, &_tmp0_), _tmp0_);
 	gtk_color_selection_set_current_color (self->priv->colorselBackground, &clr);
 	g_object_notify ((GObject *) self, "current-background-color");
 }
 
 
-gboolean geany_facelift_ui_get_font_bold (GeanyFaceliftUI* self) {
+gboolean geany_colorizer_ui_get_font_bold (GeanyColorizerUI* self) {
 	gboolean result;
 	g_return_val_if_fail (self != NULL, FALSE);
 	result = gtk_toggle_button_get_active ((GtkToggleButton*) self->priv->checkFontBold);
@@ -467,14 +464,14 @@ gboolean geany_facelift_ui_get_font_bold (GeanyFaceliftUI* self) {
 }
 
 
-void geany_facelift_ui_set_font_bold (GeanyFaceliftUI* self, gboolean value) {
+void geany_colorizer_ui_set_font_bold (GeanyColorizerUI* self, gboolean value) {
 	g_return_if_fail (self != NULL);
 	gtk_toggle_button_set_active ((GtkToggleButton*) self->priv->checkFontBold, value);
 	g_object_notify ((GObject *) self, "font-bold");
 }
 
 
-gboolean geany_facelift_ui_get_font_italic (GeanyFaceliftUI* self) {
+gboolean geany_colorizer_ui_get_font_italic (GeanyColorizerUI* self) {
 	gboolean result;
 	g_return_val_if_fail (self != NULL, FALSE);
 	result = gtk_toggle_button_get_active ((GtkToggleButton*) self->priv->checkFontItalic);
@@ -482,14 +479,14 @@ gboolean geany_facelift_ui_get_font_italic (GeanyFaceliftUI* self) {
 }
 
 
-void geany_facelift_ui_set_font_italic (GeanyFaceliftUI* self, gboolean value) {
+void geany_colorizer_ui_set_font_italic (GeanyColorizerUI* self, gboolean value) {
 	g_return_if_fail (self != NULL);
 	gtk_toggle_button_set_active ((GtkToggleButton*) self->priv->checkFontItalic, value);
 	g_object_notify ((GObject *) self, "font-italic");
 }
 
 
-gboolean geany_facelift_ui_get_font_underline (GeanyFaceliftUI* self) {
+gboolean geany_colorizer_ui_get_font_underline (GeanyColorizerUI* self) {
 	gboolean result;
 	g_return_val_if_fail (self != NULL, FALSE);
 	result = gtk_toggle_button_get_active ((GtkToggleButton*) self->priv->checkFontUnderline);
@@ -497,14 +494,14 @@ gboolean geany_facelift_ui_get_font_underline (GeanyFaceliftUI* self) {
 }
 
 
-void geany_facelift_ui_set_font_underline (GeanyFaceliftUI* self, gboolean value) {
+void geany_colorizer_ui_set_font_underline (GeanyColorizerUI* self, gboolean value) {
 	g_return_if_fail (self != NULL);
 	gtk_toggle_button_set_active ((GtkToggleButton*) self->priv->checkFontUnderline, value);
 	g_object_notify ((GObject *) self, "font-underline");
 }
 
 
-gboolean geany_facelift_ui_get_use_common_background (GeanyFaceliftUI* self) {
+gboolean geany_colorizer_ui_get_use_common_background (GeanyColorizerUI* self) {
 	gboolean result;
 	g_return_val_if_fail (self != NULL, FALSE);
 	result = gtk_toggle_button_get_active ((GtkToggleButton*) self->priv->checkUseCommonBackground);
@@ -512,50 +509,50 @@ gboolean geany_facelift_ui_get_use_common_background (GeanyFaceliftUI* self) {
 }
 
 
-void geany_facelift_ui_set_use_common_background (GeanyFaceliftUI* self, gboolean value) {
+void geany_colorizer_ui_set_use_common_background (GeanyColorizerUI* self, gboolean value) {
 	g_return_if_fail (self != NULL);
 	gtk_toggle_button_set_active ((GtkToggleButton*) self->priv->checkUseCommonBackground, value);
 	g_object_notify ((GObject *) self, "use-common-background");
 }
 
 
-static void geany_facelift_ui_class_init (GeanyFaceliftUIClass * klass) {
-	geany_facelift_ui_parent_class = g_type_class_peek_parent (klass);
-	g_type_class_add_private (klass, sizeof (GeanyFaceliftUIPrivate));
-	G_OBJECT_CLASS (klass)->get_property = geany_facelift_ui_get_property;
-	G_OBJECT_CLASS (klass)->set_property = geany_facelift_ui_set_property;
-	G_OBJECT_CLASS (klass)->finalize = geany_facelift_ui_finalize;
-	g_object_class_install_property (G_OBJECT_CLASS (klass), GEANY_FACELIFT_UI_COMBO_LEXER, g_param_spec_object ("combo-lexer", "combo-lexer", "combo-lexer", GTK_TYPE_COMBO_BOX, G_PARAM_STATIC_NAME | G_PARAM_STATIC_NICK | G_PARAM_STATIC_BLURB | G_PARAM_READABLE));
-	g_object_class_install_property (G_OBJECT_CLASS (klass), GEANY_FACELIFT_UI_COMBO_STYLE, g_param_spec_object ("combo-style", "combo-style", "combo-style", GTK_TYPE_COMBO_BOX, G_PARAM_STATIC_NAME | G_PARAM_STATIC_NICK | G_PARAM_STATIC_BLURB | G_PARAM_READABLE));
-	g_object_class_install_property (G_OBJECT_CLASS (klass), GEANY_FACELIFT_UI_CURRENT_LEXER, g_param_spec_int ("current-lexer", "current-lexer", "current-lexer", G_MININT, G_MAXINT, 0, G_PARAM_STATIC_NAME | G_PARAM_STATIC_NICK | G_PARAM_STATIC_BLURB | G_PARAM_READABLE | G_PARAM_WRITABLE));
-	g_object_class_install_property (G_OBJECT_CLASS (klass), GEANY_FACELIFT_UI_CURRENT_STYLE, g_param_spec_int ("current-style", "current-style", "current-style", G_MININT, G_MAXINT, 0, G_PARAM_STATIC_NAME | G_PARAM_STATIC_NICK | G_PARAM_STATIC_BLURB | G_PARAM_READABLE | G_PARAM_WRITABLE));
-	g_object_class_install_property (G_OBJECT_CLASS (klass), GEANY_FACELIFT_UI_CURRENT_FOREGROUND_COLOR, g_param_spec_int ("current-foreground-color", "current-foreground-color", "current-foreground-color", G_MININT, G_MAXINT, 0, G_PARAM_STATIC_NAME | G_PARAM_STATIC_NICK | G_PARAM_STATIC_BLURB | G_PARAM_READABLE | G_PARAM_WRITABLE));
-	g_object_class_install_property (G_OBJECT_CLASS (klass), GEANY_FACELIFT_UI_CURRENT_BACKGROUND_COLOR, g_param_spec_int ("current-background-color", "current-background-color", "current-background-color", G_MININT, G_MAXINT, 0, G_PARAM_STATIC_NAME | G_PARAM_STATIC_NICK | G_PARAM_STATIC_BLURB | G_PARAM_READABLE | G_PARAM_WRITABLE));
-	g_object_class_install_property (G_OBJECT_CLASS (klass), GEANY_FACELIFT_UI_FONT_BOLD, g_param_spec_boolean ("font-bold", "font-bold", "font-bold", FALSE, G_PARAM_STATIC_NAME | G_PARAM_STATIC_NICK | G_PARAM_STATIC_BLURB | G_PARAM_READABLE | G_PARAM_WRITABLE));
-	g_object_class_install_property (G_OBJECT_CLASS (klass), GEANY_FACELIFT_UI_FONT_ITALIC, g_param_spec_boolean ("font-italic", "font-italic", "font-italic", FALSE, G_PARAM_STATIC_NAME | G_PARAM_STATIC_NICK | G_PARAM_STATIC_BLURB | G_PARAM_READABLE | G_PARAM_WRITABLE));
-	g_object_class_install_property (G_OBJECT_CLASS (klass), GEANY_FACELIFT_UI_FONT_UNDERLINE, g_param_spec_boolean ("font-underline", "font-underline", "font-underline", FALSE, G_PARAM_STATIC_NAME | G_PARAM_STATIC_NICK | G_PARAM_STATIC_BLURB | G_PARAM_READABLE | G_PARAM_WRITABLE));
-	g_object_class_install_property (G_OBJECT_CLASS (klass), GEANY_FACELIFT_UI_USE_COMMON_BACKGROUND, g_param_spec_boolean ("use-common-background", "use-common-background", "use-common-background", FALSE, G_PARAM_STATIC_NAME | G_PARAM_STATIC_NICK | G_PARAM_STATIC_BLURB | G_PARAM_READABLE | G_PARAM_WRITABLE));
-	g_signal_new ("foreground_color_changed", GEANY_TYPE_FACELIFT_UI, G_SIGNAL_RUN_LAST, 0, NULL, NULL, g_cclosure_marshal_VOID__INT, G_TYPE_NONE, 1, G_TYPE_INT);
-	g_signal_new ("background_color_changed", GEANY_TYPE_FACELIFT_UI, G_SIGNAL_RUN_LAST, 0, NULL, NULL, g_cclosure_marshal_VOID__INT, G_TYPE_NONE, 1, G_TYPE_INT);
-	g_signal_new ("lexer_changed", GEANY_TYPE_FACELIFT_UI, G_SIGNAL_RUN_LAST, 0, NULL, NULL, g_cclosure_marshal_VOID__INT, G_TYPE_NONE, 1, G_TYPE_INT);
-	g_signal_new ("style_changed", GEANY_TYPE_FACELIFT_UI, G_SIGNAL_RUN_LAST, 0, NULL, NULL, g_cclosure_marshal_VOID__INT, G_TYPE_NONE, 1, G_TYPE_INT);
-	g_signal_new ("use_common_bg_color_toggled", GEANY_TYPE_FACELIFT_UI, G_SIGNAL_RUN_LAST, 0, NULL, NULL, g_cclosure_marshal_VOID__BOOLEAN, G_TYPE_NONE, 1, G_TYPE_BOOLEAN);
-	g_signal_new ("close_button_clicked", GEANY_TYPE_FACELIFT_UI, G_SIGNAL_RUN_LAST, 0, NULL, NULL, g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 0);
-	g_signal_new ("notebook_page_switched", GEANY_TYPE_FACELIFT_UI, G_SIGNAL_RUN_LAST, 0, NULL, NULL, g_cclosure_marshal_VOID__INT, G_TYPE_NONE, 1, G_TYPE_INT);
-	g_signal_new ("font_bold_toggled", GEANY_TYPE_FACELIFT_UI, G_SIGNAL_RUN_LAST, 0, NULL, NULL, g_cclosure_marshal_VOID__BOOLEAN, G_TYPE_NONE, 1, G_TYPE_BOOLEAN);
-	g_signal_new ("font_italic_toggled", GEANY_TYPE_FACELIFT_UI, G_SIGNAL_RUN_LAST, 0, NULL, NULL, g_cclosure_marshal_VOID__BOOLEAN, G_TYPE_NONE, 1, G_TYPE_BOOLEAN);
-	g_signal_new ("font_underline_toggled", GEANY_TYPE_FACELIFT_UI, G_SIGNAL_RUN_LAST, 0, NULL, NULL, g_cclosure_marshal_VOID__BOOLEAN, G_TYPE_NONE, 1, G_TYPE_BOOLEAN);
+static void geany_colorizer_ui_class_init (GeanyColorizerUIClass * klass) {
+	geany_colorizer_ui_parent_class = g_type_class_peek_parent (klass);
+	g_type_class_add_private (klass, sizeof (GeanyColorizerUIPrivate));
+	G_OBJECT_CLASS (klass)->get_property = geany_colorizer_ui_get_property;
+	G_OBJECT_CLASS (klass)->set_property = geany_colorizer_ui_set_property;
+	G_OBJECT_CLASS (klass)->finalize = geany_colorizer_ui_finalize;
+	g_object_class_install_property (G_OBJECT_CLASS (klass), GEANY_COLORIZER_UI_COMBO_LEXER, g_param_spec_object ("combo-lexer", "combo-lexer", "combo-lexer", GTK_TYPE_COMBO_BOX, G_PARAM_STATIC_NAME | G_PARAM_STATIC_NICK | G_PARAM_STATIC_BLURB | G_PARAM_READABLE));
+	g_object_class_install_property (G_OBJECT_CLASS (klass), GEANY_COLORIZER_UI_COMBO_STYLE, g_param_spec_object ("combo-style", "combo-style", "combo-style", GTK_TYPE_COMBO_BOX, G_PARAM_STATIC_NAME | G_PARAM_STATIC_NICK | G_PARAM_STATIC_BLURB | G_PARAM_READABLE));
+	g_object_class_install_property (G_OBJECT_CLASS (klass), GEANY_COLORIZER_UI_CURRENT_LEXER, g_param_spec_int ("current-lexer", "current-lexer", "current-lexer", G_MININT, G_MAXINT, 0, G_PARAM_STATIC_NAME | G_PARAM_STATIC_NICK | G_PARAM_STATIC_BLURB | G_PARAM_READABLE | G_PARAM_WRITABLE));
+	g_object_class_install_property (G_OBJECT_CLASS (klass), GEANY_COLORIZER_UI_CURRENT_STYLE, g_param_spec_int ("current-style", "current-style", "current-style", G_MININT, G_MAXINT, 0, G_PARAM_STATIC_NAME | G_PARAM_STATIC_NICK | G_PARAM_STATIC_BLURB | G_PARAM_READABLE | G_PARAM_WRITABLE));
+	g_object_class_install_property (G_OBJECT_CLASS (klass), GEANY_COLORIZER_UI_CURRENT_FOREGROUND_COLOR, g_param_spec_int ("current-foreground-color", "current-foreground-color", "current-foreground-color", G_MININT, G_MAXINT, 0, G_PARAM_STATIC_NAME | G_PARAM_STATIC_NICK | G_PARAM_STATIC_BLURB | G_PARAM_READABLE | G_PARAM_WRITABLE));
+	g_object_class_install_property (G_OBJECT_CLASS (klass), GEANY_COLORIZER_UI_CURRENT_BACKGROUND_COLOR, g_param_spec_int ("current-background-color", "current-background-color", "current-background-color", G_MININT, G_MAXINT, 0, G_PARAM_STATIC_NAME | G_PARAM_STATIC_NICK | G_PARAM_STATIC_BLURB | G_PARAM_READABLE | G_PARAM_WRITABLE));
+	g_object_class_install_property (G_OBJECT_CLASS (klass), GEANY_COLORIZER_UI_FONT_BOLD, g_param_spec_boolean ("font-bold", "font-bold", "font-bold", FALSE, G_PARAM_STATIC_NAME | G_PARAM_STATIC_NICK | G_PARAM_STATIC_BLURB | G_PARAM_READABLE | G_PARAM_WRITABLE));
+	g_object_class_install_property (G_OBJECT_CLASS (klass), GEANY_COLORIZER_UI_FONT_ITALIC, g_param_spec_boolean ("font-italic", "font-italic", "font-italic", FALSE, G_PARAM_STATIC_NAME | G_PARAM_STATIC_NICK | G_PARAM_STATIC_BLURB | G_PARAM_READABLE | G_PARAM_WRITABLE));
+	g_object_class_install_property (G_OBJECT_CLASS (klass), GEANY_COLORIZER_UI_FONT_UNDERLINE, g_param_spec_boolean ("font-underline", "font-underline", "font-underline", FALSE, G_PARAM_STATIC_NAME | G_PARAM_STATIC_NICK | G_PARAM_STATIC_BLURB | G_PARAM_READABLE | G_PARAM_WRITABLE));
+	g_object_class_install_property (G_OBJECT_CLASS (klass), GEANY_COLORIZER_UI_USE_COMMON_BACKGROUND, g_param_spec_boolean ("use-common-background", "use-common-background", "use-common-background", FALSE, G_PARAM_STATIC_NAME | G_PARAM_STATIC_NICK | G_PARAM_STATIC_BLURB | G_PARAM_READABLE | G_PARAM_WRITABLE));
+	g_signal_new ("foreground_color_changed", GEANY_TYPE_COLORIZER_UI, G_SIGNAL_RUN_LAST, 0, NULL, NULL, g_cclosure_marshal_VOID__INT, G_TYPE_NONE, 1, G_TYPE_INT);
+	g_signal_new ("background_color_changed", GEANY_TYPE_COLORIZER_UI, G_SIGNAL_RUN_LAST, 0, NULL, NULL, g_cclosure_marshal_VOID__INT, G_TYPE_NONE, 1, G_TYPE_INT);
+	g_signal_new ("lexer_changed", GEANY_TYPE_COLORIZER_UI, G_SIGNAL_RUN_LAST, 0, NULL, NULL, g_cclosure_marshal_VOID__INT, G_TYPE_NONE, 1, G_TYPE_INT);
+	g_signal_new ("style_changed", GEANY_TYPE_COLORIZER_UI, G_SIGNAL_RUN_LAST, 0, NULL, NULL, g_cclosure_marshal_VOID__INT, G_TYPE_NONE, 1, G_TYPE_INT);
+	g_signal_new ("use_common_bg_color_toggled", GEANY_TYPE_COLORIZER_UI, G_SIGNAL_RUN_LAST, 0, NULL, NULL, g_cclosure_marshal_VOID__BOOLEAN, G_TYPE_NONE, 1, G_TYPE_BOOLEAN);
+	g_signal_new ("close_button_clicked", GEANY_TYPE_COLORIZER_UI, G_SIGNAL_RUN_LAST, 0, NULL, NULL, g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 0);
+	g_signal_new ("notebook_page_switched", GEANY_TYPE_COLORIZER_UI, G_SIGNAL_RUN_LAST, 0, NULL, NULL, g_cclosure_marshal_VOID__INT, G_TYPE_NONE, 1, G_TYPE_INT);
+	g_signal_new ("font_bold_toggled", GEANY_TYPE_COLORIZER_UI, G_SIGNAL_RUN_LAST, 0, NULL, NULL, g_cclosure_marshal_VOID__BOOLEAN, G_TYPE_NONE, 1, G_TYPE_BOOLEAN);
+	g_signal_new ("font_italic_toggled", GEANY_TYPE_COLORIZER_UI, G_SIGNAL_RUN_LAST, 0, NULL, NULL, g_cclosure_marshal_VOID__BOOLEAN, G_TYPE_NONE, 1, G_TYPE_BOOLEAN);
+	g_signal_new ("font_underline_toggled", GEANY_TYPE_COLORIZER_UI, G_SIGNAL_RUN_LAST, 0, NULL, NULL, g_cclosure_marshal_VOID__BOOLEAN, G_TYPE_NONE, 1, G_TYPE_BOOLEAN);
 }
 
 
-static void geany_facelift_ui_instance_init (GeanyFaceliftUI * self) {
-	self->priv = GEANY_FACELIFT_UI_GET_PRIVATE (self);
+static void geany_colorizer_ui_instance_init (GeanyColorizerUI * self) {
+	self->priv = GEANY_COLORIZER_UI_GET_PRIVATE (self);
 }
 
 
-static void geany_facelift_ui_finalize (GObject* obj) {
-	GeanyFaceliftUI * self;
-	self = GEANY_FACELIFT_UI (obj);
+static void geany_colorizer_ui_finalize (GObject* obj) {
+	GeanyColorizerUI * self;
+	self = GEANY_COLORIZER_UI (obj);
 	_g_object_unref0 (self->priv->comboLexer);
 	_g_object_unref0 (self->priv->comboStyle);
 	_g_object_unref0 (self->priv->notebookMain);
@@ -565,55 +562,55 @@ static void geany_facelift_ui_finalize (GObject* obj) {
 	_g_object_unref0 (self->priv->checkFontBold);
 	_g_object_unref0 (self->priv->checkFontItalic);
 	_g_object_unref0 (self->priv->checkFontUnderline);
-	G_OBJECT_CLASS (geany_facelift_ui_parent_class)->finalize (obj);
+	G_OBJECT_CLASS (geany_colorizer_ui_parent_class)->finalize (obj);
 }
 
 
-GType geany_facelift_ui_get_type (void) {
-	static volatile gsize geany_facelift_ui_type_id__volatile = 0;
-	if (g_once_init_enter (&geany_facelift_ui_type_id__volatile)) {
-		static const GTypeInfo g_define_type_info = { sizeof (GeanyFaceliftUIClass), (GBaseInitFunc) NULL, (GBaseFinalizeFunc) NULL, (GClassInitFunc) geany_facelift_ui_class_init, (GClassFinalizeFunc) NULL, NULL, sizeof (GeanyFaceliftUI), 0, (GInstanceInitFunc) geany_facelift_ui_instance_init, NULL };
-		GType geany_facelift_ui_type_id;
-		geany_facelift_ui_type_id = g_type_register_static (GTK_TYPE_VBOX, "GeanyFaceliftUI", &g_define_type_info, 0);
-		g_once_init_leave (&geany_facelift_ui_type_id__volatile, geany_facelift_ui_type_id);
+GType geany_colorizer_ui_get_type (void) {
+	static volatile gsize geany_colorizer_ui_type_id__volatile = 0;
+	if (g_once_init_enter (&geany_colorizer_ui_type_id__volatile)) {
+		static const GTypeInfo g_define_type_info = { sizeof (GeanyColorizerUIClass), (GBaseInitFunc) NULL, (GBaseFinalizeFunc) NULL, (GClassInitFunc) geany_colorizer_ui_class_init, (GClassFinalizeFunc) NULL, NULL, sizeof (GeanyColorizerUI), 0, (GInstanceInitFunc) geany_colorizer_ui_instance_init, NULL };
+		GType geany_colorizer_ui_type_id;
+		geany_colorizer_ui_type_id = g_type_register_static (GTK_TYPE_VBOX, "GeanyColorizerUI", &g_define_type_info, 0);
+		g_once_init_leave (&geany_colorizer_ui_type_id__volatile, geany_colorizer_ui_type_id);
 	}
-	return geany_facelift_ui_type_id__volatile;
+	return geany_colorizer_ui_type_id__volatile;
 }
 
 
-static void geany_facelift_ui_get_property (GObject * object, guint property_id, GValue * value, GParamSpec * pspec) {
-	GeanyFaceliftUI * self;
-	self = GEANY_FACELIFT_UI (object);
+static void geany_colorizer_ui_get_property (GObject * object, guint property_id, GValue * value, GParamSpec * pspec) {
+	GeanyColorizerUI * self;
+	self = GEANY_COLORIZER_UI (object);
 	switch (property_id) {
-		case GEANY_FACELIFT_UI_COMBO_LEXER:
-		g_value_set_object (value, geany_facelift_ui_get_combo_lexer (self));
+		case GEANY_COLORIZER_UI_COMBO_LEXER:
+		g_value_set_object (value, geany_colorizer_ui_get_combo_lexer (self));
 		break;
-		case GEANY_FACELIFT_UI_COMBO_STYLE:
-		g_value_set_object (value, geany_facelift_ui_get_combo_style (self));
+		case GEANY_COLORIZER_UI_COMBO_STYLE:
+		g_value_set_object (value, geany_colorizer_ui_get_combo_style (self));
 		break;
-		case GEANY_FACELIFT_UI_CURRENT_LEXER:
-		g_value_set_int (value, geany_facelift_ui_get_current_lexer (self));
+		case GEANY_COLORIZER_UI_CURRENT_LEXER:
+		g_value_set_int (value, geany_colorizer_ui_get_current_lexer (self));
 		break;
-		case GEANY_FACELIFT_UI_CURRENT_STYLE:
-		g_value_set_int (value, geany_facelift_ui_get_current_style (self));
+		case GEANY_COLORIZER_UI_CURRENT_STYLE:
+		g_value_set_int (value, geany_colorizer_ui_get_current_style (self));
 		break;
-		case GEANY_FACELIFT_UI_CURRENT_FOREGROUND_COLOR:
-		g_value_set_int (value, geany_facelift_ui_get_current_foreground_color (self));
+		case GEANY_COLORIZER_UI_CURRENT_FOREGROUND_COLOR:
+		g_value_set_int (value, geany_colorizer_ui_get_current_foreground_color (self));
 		break;
-		case GEANY_FACELIFT_UI_CURRENT_BACKGROUND_COLOR:
-		g_value_set_int (value, geany_facelift_ui_get_current_background_color (self));
+		case GEANY_COLORIZER_UI_CURRENT_BACKGROUND_COLOR:
+		g_value_set_int (value, geany_colorizer_ui_get_current_background_color (self));
 		break;
-		case GEANY_FACELIFT_UI_FONT_BOLD:
-		g_value_set_boolean (value, geany_facelift_ui_get_font_bold (self));
+		case GEANY_COLORIZER_UI_FONT_BOLD:
+		g_value_set_boolean (value, geany_colorizer_ui_get_font_bold (self));
 		break;
-		case GEANY_FACELIFT_UI_FONT_ITALIC:
-		g_value_set_boolean (value, geany_facelift_ui_get_font_italic (self));
+		case GEANY_COLORIZER_UI_FONT_ITALIC:
+		g_value_set_boolean (value, geany_colorizer_ui_get_font_italic (self));
 		break;
-		case GEANY_FACELIFT_UI_FONT_UNDERLINE:
-		g_value_set_boolean (value, geany_facelift_ui_get_font_underline (self));
+		case GEANY_COLORIZER_UI_FONT_UNDERLINE:
+		g_value_set_boolean (value, geany_colorizer_ui_get_font_underline (self));
 		break;
-		case GEANY_FACELIFT_UI_USE_COMMON_BACKGROUND:
-		g_value_set_boolean (value, geany_facelift_ui_get_use_common_background (self));
+		case GEANY_COLORIZER_UI_USE_COMMON_BACKGROUND:
+		g_value_set_boolean (value, geany_colorizer_ui_get_use_common_background (self));
 		break;
 		default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
@@ -622,67 +619,38 @@ static void geany_facelift_ui_get_property (GObject * object, guint property_id,
 }
 
 
-static void geany_facelift_ui_set_property (GObject * object, guint property_id, const GValue * value, GParamSpec * pspec) {
-	GeanyFaceliftUI * self;
-	self = GEANY_FACELIFT_UI (object);
+static void geany_colorizer_ui_set_property (GObject * object, guint property_id, const GValue * value, GParamSpec * pspec) {
+	GeanyColorizerUI * self;
+	self = GEANY_COLORIZER_UI (object);
 	switch (property_id) {
-		case GEANY_FACELIFT_UI_CURRENT_LEXER:
-		geany_facelift_ui_set_current_lexer (self, g_value_get_int (value));
+		case GEANY_COLORIZER_UI_CURRENT_LEXER:
+		geany_colorizer_ui_set_current_lexer (self, g_value_get_int (value));
 		break;
-		case GEANY_FACELIFT_UI_CURRENT_STYLE:
-		geany_facelift_ui_set_current_style (self, g_value_get_int (value));
+		case GEANY_COLORIZER_UI_CURRENT_STYLE:
+		geany_colorizer_ui_set_current_style (self, g_value_get_int (value));
 		break;
-		case GEANY_FACELIFT_UI_CURRENT_FOREGROUND_COLOR:
-		geany_facelift_ui_set_current_foreground_color (self, g_value_get_int (value));
+		case GEANY_COLORIZER_UI_CURRENT_FOREGROUND_COLOR:
+		geany_colorizer_ui_set_current_foreground_color (self, g_value_get_int (value));
 		break;
-		case GEANY_FACELIFT_UI_CURRENT_BACKGROUND_COLOR:
-		geany_facelift_ui_set_current_background_color (self, g_value_get_int (value));
+		case GEANY_COLORIZER_UI_CURRENT_BACKGROUND_COLOR:
+		geany_colorizer_ui_set_current_background_color (self, g_value_get_int (value));
 		break;
-		case GEANY_FACELIFT_UI_FONT_BOLD:
-		geany_facelift_ui_set_font_bold (self, g_value_get_boolean (value));
+		case GEANY_COLORIZER_UI_FONT_BOLD:
+		geany_colorizer_ui_set_font_bold (self, g_value_get_boolean (value));
 		break;
-		case GEANY_FACELIFT_UI_FONT_ITALIC:
-		geany_facelift_ui_set_font_italic (self, g_value_get_boolean (value));
+		case GEANY_COLORIZER_UI_FONT_ITALIC:
+		geany_colorizer_ui_set_font_italic (self, g_value_get_boolean (value));
 		break;
-		case GEANY_FACELIFT_UI_FONT_UNDERLINE:
-		geany_facelift_ui_set_font_underline (self, g_value_get_boolean (value));
+		case GEANY_COLORIZER_UI_FONT_UNDERLINE:
+		geany_colorizer_ui_set_font_underline (self, g_value_get_boolean (value));
 		break;
-		case GEANY_FACELIFT_UI_USE_COMMON_BACKGROUND:
-		geany_facelift_ui_set_use_common_background (self, g_value_get_boolean (value));
+		case GEANY_COLORIZER_UI_USE_COMMON_BACKGROUND:
+		geany_colorizer_ui_set_use_common_background (self, g_value_get_boolean (value));
 		break;
 		default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
 		break;
 	}
-}
-
-
-static void _gtk_main_quit_gtk_object_destroy (GtkObject* _sender, gpointer self) {
-	gtk_main_quit ();
-}
-
-
-gint geany_main (char** args, int args_length1) {
-	gint result = 0;
-	GtkWindow* win;
-	GeanyFaceliftUI* ui;
-	gtk_init (&args_length1, &args);
-	win = g_object_ref_sink ((GtkWindow*) gtk_window_new (GTK_WINDOW_TOPLEVEL));
-	ui = g_object_ref_sink (geany_facelift_ui_new ());
-	gtk_container_add ((GtkContainer*) win, (GtkWidget*) ui);
-	g_signal_connect ((GtkObject*) win, "destroy", (GCallback) _gtk_main_quit_gtk_object_destroy, NULL);
-	gtk_widget_show_all ((GtkWidget*) win);
-	gtk_main ();
-	result = 0;
-	_g_object_unref0 (ui);
-	_g_object_unref0 (win);
-	return result;
-}
-
-
-int main (int argc, char ** argv) {
-	g_type_init ();
-	return geany_main (argv, argc);
 }
 
 

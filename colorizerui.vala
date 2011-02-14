@@ -6,7 +6,7 @@ using Pango;
 namespace Geany
 {
 	
-	public class FaceliftUI : Gtk.VBox
+	public class ColorizerUI : Gtk.VBox
 	{
 		
 		Gtk.ComboBox comboLexer;
@@ -33,7 +33,7 @@ namespace Geany
 		public signal void font_italic_toggled(bool font_italic);
 		public signal void font_underline_toggled(bool font_italic);
 		
-		public FaceliftUI()
+		public ColorizerUI()
 		{
 			init_ui();
 		}
@@ -260,22 +260,6 @@ namespace Geany
 			c.blue = (uint16)(b * 256);
 			return c;
 		}
-	}
-	
-	public static int main(string[] args)
-	{
-		Gtk.init(ref args);
-		
-		Gtk.Window win = new Gtk.Window();
-		FaceliftUI ui = new FaceliftUI();
-		
-		win.add(ui);
-		win.destroy.connect(Gtk.main_quit);
-		win.show_all();
-		
-		Gtk.main();
-		
-		return 0;
 	}
 	
 }

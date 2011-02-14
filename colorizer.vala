@@ -26,7 +26,7 @@ public int plugin_version_check (int abi_version) {
 // Static and Global variables
 
 private static unowned Scintilla.Object? sci = null;
-private static FaceliftUI? ui;
+private static ColorizerUI? ui;
 //private static Editor.Interface? iface = null;
 private static const int FACELIFT_INDIC=INDIC_MAX-1;
 
@@ -259,7 +259,7 @@ public void plugin_init (Geany.Data data)
 		(GLib.Callback)on_current_document_changed, null);
 	
 	/* add a tab for the widget in the message window */
-	ui = new FaceliftUI();
+	ui = new ColorizerUI();
 	ui.foreground_color_changed.connect(on_fg_color_changed);
 	ui.background_color_changed.connect(on_bg_color_changed);
 	ui.font_bold_toggled.connect(on_font_bold_toggled);

@@ -14,15 +14,15 @@
 #include <gdk/gdk.h>
 
 
-#define GEANY_TYPE_FACELIFT_UI (geany_facelift_ui_get_type ())
-#define GEANY_FACELIFT_UI(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), GEANY_TYPE_FACELIFT_UI, GeanyFaceliftUI))
-#define GEANY_FACELIFT_UI_CLASS(klass) (G_TYPE_CHECK_CLASS_CAST ((klass), GEANY_TYPE_FACELIFT_UI, GeanyFaceliftUIClass))
-#define GEANY_IS_FACELIFT_UI(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GEANY_TYPE_FACELIFT_UI))
-#define GEANY_IS_FACELIFT_UI_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GEANY_TYPE_FACELIFT_UI))
-#define GEANY_FACELIFT_UI_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), GEANY_TYPE_FACELIFT_UI, GeanyFaceliftUIClass))
+#define GEANY_TYPE_COLORIZER_UI (geany_colorizer_ui_get_type ())
+#define GEANY_COLORIZER_UI(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), GEANY_TYPE_COLORIZER_UI, GeanyColorizerUI))
+#define GEANY_COLORIZER_UI_CLASS(klass) (G_TYPE_CHECK_CLASS_CAST ((klass), GEANY_TYPE_COLORIZER_UI, GeanyColorizerUIClass))
+#define GEANY_IS_COLORIZER_UI(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GEANY_TYPE_COLORIZER_UI))
+#define GEANY_IS_COLORIZER_UI_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GEANY_TYPE_COLORIZER_UI))
+#define GEANY_COLORIZER_UI_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), GEANY_TYPE_COLORIZER_UI, GeanyColorizerUIClass))
 
-typedef struct _GeanyFaceliftUI GeanyFaceliftUI;
-typedef struct _GeanyFaceliftUIClass GeanyFaceliftUIClass;
+typedef struct _GeanyColorizerUI GeanyColorizerUI;
+typedef struct _GeanyColorizerUIClass GeanyColorizerUIClass;
 #define _g_object_unref0(var) ((var == NULL) ? NULL : (var = (g_object_unref (var), NULL)))
 #define _g_free0(var) (var = (g_free (var), NULL))
 
@@ -35,8 +35,8 @@ extern GeanyFunctions* geany_functions;
 GeanyFunctions* geany_functions = NULL;
 extern ScintillaObject* sci;
 ScintillaObject* sci = NULL;
-extern GeanyFaceliftUI* ui;
-GeanyFaceliftUI* ui = NULL;
+extern GeanyColorizerUI* ui;
+GeanyColorizerUI* ui = NULL;
 extern gint foreground_colors[33];
 gint foreground_colors[33] = {0};
 extern gint background_colors[33];
@@ -60,23 +60,23 @@ GtkScrolledWindow* swin = NULL;
 
 void plugin_set_info (PluginInfo* info);
 gint plugin_version_check (gint abi_version);
-GType geany_facelift_ui_get_type (void) G_GNUC_CONST;
+GType geany_colorizer_ui_get_type (void) G_GNUC_CONST;
 #define FACELIFT_INDIC (INDIC_MAX - 1)
 void on_current_document_changed (GObject* ignored, struct GeanyDocument* doc);
 void on_editor_notif (gint param, struct SCNotification* notif);
 static void _on_editor_notif_scintilla_object_sci_notify (ScintillaObject* _sender, gint param, struct SCNotification* notif, gpointer self);
-void geany_facelift_ui_set_current_lexer (GeanyFaceliftUI* self, gint value);
-void geany_facelift_ui_set_current_style (GeanyFaceliftUI* self, gint value);
+void geany_colorizer_ui_set_current_lexer (GeanyColorizerUI* self, gint value);
+void geany_colorizer_ui_set_current_style (GeanyColorizerUI* self, gint value);
 gboolean colorize_editor (void);
-gint geany_facelift_ui_get_current_style (GeanyFaceliftUI* self);
-void geany_facelift_ui_set_current_foreground_color (GeanyFaceliftUI* self, gint value);
-void geany_facelift_ui_set_current_background_color (GeanyFaceliftUI* self, gint value);
-void geany_facelift_ui_set_font_bold (GeanyFaceliftUI* self, gboolean value);
-void geany_facelift_ui_set_font_italic (GeanyFaceliftUI* self, gboolean value);
-void geany_facelift_ui_set_font_underline (GeanyFaceliftUI* self, gboolean value);
+gint geany_colorizer_ui_get_current_style (GeanyColorizerUI* self);
+void geany_colorizer_ui_set_current_foreground_color (GeanyColorizerUI* self, gint value);
+void geany_colorizer_ui_set_current_background_color (GeanyColorizerUI* self, gint value);
+void geany_colorizer_ui_set_font_bold (GeanyColorizerUI* self, gboolean value);
+void geany_colorizer_ui_set_font_italic (GeanyColorizerUI* self, gboolean value);
+void geany_colorizer_ui_set_font_underline (GeanyColorizerUI* self, gboolean value);
 void on_fg_color_changed (gint new_color);
 void on_bg_color_changed (gint new_color);
-gboolean geany_facelift_ui_get_use_common_background (GeanyFaceliftUI* self);
+gboolean geany_colorizer_ui_get_use_common_background (GeanyColorizerUI* self);
 void on_font_bold_toggled (gboolean font_bold);
 void on_font_italic_toggled (gboolean font_italic);
 void on_font_underline_toggled (gboolean font_underline);
@@ -85,17 +85,17 @@ void on_open_toggled (void);
 gboolean on_dialog_delete (void);
 void on_dialog_response (gint response_id);
 void plugin_init (GeanyData* data);
-GeanyFaceliftUI* geany_facelift_ui_new (void);
-GeanyFaceliftUI* geany_facelift_ui_construct (GType object_type);
-static void _on_fg_color_changed_geany_facelift_ui_foreground_color_changed (GeanyFaceliftUI* _sender, gint color, gpointer self);
-static void _on_bg_color_changed_geany_facelift_ui_background_color_changed (GeanyFaceliftUI* _sender, gint color, gpointer self);
-static void _on_font_bold_toggled_geany_facelift_ui_font_bold_toggled (GeanyFaceliftUI* _sender, gboolean font_bold, gpointer self);
-static void _on_font_italic_toggled_geany_facelift_ui_font_italic_toggled (GeanyFaceliftUI* _sender, gboolean font_italic, gpointer self);
-static void _on_font_underline_toggled_geany_facelift_ui_font_underline_toggled (GeanyFaceliftUI* _sender, gboolean font_italic, gpointer self);
+GeanyColorizerUI* geany_colorizer_ui_new (void);
+GeanyColorizerUI* geany_colorizer_ui_construct (GType object_type);
+static void _on_fg_color_changed_geany_colorizer_ui_foreground_color_changed (GeanyColorizerUI* _sender, gint color, gpointer self);
+static void _on_bg_color_changed_geany_colorizer_ui_background_color_changed (GeanyColorizerUI* _sender, gint color, gpointer self);
+static void _on_font_bold_toggled_geany_colorizer_ui_font_bold_toggled (GeanyColorizerUI* _sender, gboolean font_bold, gpointer self);
+static void _on_font_italic_toggled_geany_colorizer_ui_font_italic_toggled (GeanyColorizerUI* _sender, gboolean font_italic, gpointer self);
+static void _on_font_underline_toggled_geany_colorizer_ui_font_underline_toggled (GeanyColorizerUI* _sender, gboolean font_italic, gpointer self);
 static gboolean _on_dialog_delete_gtk_widget_delete_event (GtkWidget* _sender, GdkEvent* event, gpointer self);
 static void _on_dialog_response_gtk_dialog_response (GtkDialog* _sender, gint response_id, gpointer self);
-GtkComboBox* geany_facelift_ui_get_combo_lexer (GeanyFaceliftUI* self);
-GtkComboBox* geany_facelift_ui_get_combo_style (GeanyFaceliftUI* self);
+GtkComboBox* geany_colorizer_ui_get_combo_lexer (GeanyColorizerUI* self);
+GtkComboBox* geany_colorizer_ui_get_combo_style (GeanyColorizerUI* self);
 static void _on_open_toggled_gtk_check_menu_item_toggled (GtkCheckMenuItem* _sender, gpointer self);
 GtkWidget* plugin_configure (GtkDialog* dlg);
 void plugin_cleanup (void);
@@ -156,9 +156,9 @@ void on_current_document_changed (GObject* ignored, struct GeanyDocument* doc) {
 			if (sci != NULL) {
 				g_signal_connect (sci, "sci-notify", (GCallback) _on_editor_notif_scintilla_object_sci_notify, NULL);
 			}
-			geany_facelift_ui_set_current_lexer (ui, (gint) scintilla_send_message (sci, (unsigned int) SCI_GETLEXER, (uptr_t) 0, (sptr_t) 0));
+			geany_colorizer_ui_set_current_lexer (ui, (gint) scintilla_send_message (sci, (unsigned int) SCI_GETLEXER, (uptr_t) 0, (sptr_t) 0));
 			pos = scintilla_send_message (sci, (unsigned int) SCI_GETCURRENTPOS, (uptr_t) 0, (sptr_t) 0);
-			geany_facelift_ui_set_current_style (ui, (gint) scintilla_send_message (sci, (unsigned int) SCI_GETSTYLEAT, (uptr_t) ((gulong) pos), (sptr_t) 0));
+			geany_colorizer_ui_set_current_style (ui, (gint) scintilla_send_message (sci, (unsigned int) SCI_GETSTYLEAT, (uptr_t) ((gulong) pos), (sptr_t) 0));
 			scintilla_send_message (sci, (unsigned int) SCI_STYLECLEARALL, (uptr_t) 0, (sptr_t) 0);
 			{
 				gint i;
@@ -197,9 +197,9 @@ gboolean colorize_editor (void) {
 		if (len > 0) {
 			glong pos;
 			glong num_chars;
-			geany_facelift_ui_set_current_lexer (ui, (gint) scintilla_send_message (sci, (unsigned int) SCI_GETLEXER, (uptr_t) 0, (sptr_t) 0));
+			geany_colorizer_ui_set_current_lexer (ui, (gint) scintilla_send_message (sci, (unsigned int) SCI_GETLEXER, (uptr_t) 0, (sptr_t) 0));
 			pos = scintilla_send_message (sci, (unsigned int) SCI_GETCURRENTPOS, (uptr_t) 0, (sptr_t) 0);
-			geany_facelift_ui_set_current_style (ui, (gint) scintilla_send_message (sci, (unsigned int) SCI_GETSTYLEAT, (uptr_t) ((gulong) pos), (sptr_t) 0));
+			geany_colorizer_ui_set_current_style (ui, (gint) scintilla_send_message (sci, (unsigned int) SCI_GETSTYLEAT, (uptr_t) ((gulong) pos), (sptr_t) 0));
 			{
 				gint i;
 				i = 0;
@@ -226,11 +226,11 @@ gboolean colorize_editor (void) {
 			scintilla_send_message (sci, (unsigned int) SCI_SETINDICATORCURRENT, (uptr_t) ((gulong) FACELIFT_INDIC), (sptr_t) 0);
 			scintilla_send_message (sci, (unsigned int) SCI_INDICATORCLEARRANGE, (uptr_t) ((gulong) 0), (sptr_t) num_chars);
 			scintilla_send_message (sci, (unsigned int) SCI_SETCARETLINEVISIBLE, (uptr_t) ((gulong) 0), (sptr_t) 0);
-			geany_facelift_ui_set_current_foreground_color (ui, foreground_colors[geany_facelift_ui_get_current_style (ui)]);
-			geany_facelift_ui_set_current_background_color (ui, background_colors[geany_facelift_ui_get_current_style (ui)]);
-			geany_facelift_ui_set_font_bold (ui, fonts_bold[geany_facelift_ui_get_current_style (ui)]);
-			geany_facelift_ui_set_font_italic (ui, fonts_italic[geany_facelift_ui_get_current_style (ui)]);
-			geany_facelift_ui_set_font_underline (ui, fonts_underline[geany_facelift_ui_get_current_style (ui)]);
+			geany_colorizer_ui_set_current_foreground_color (ui, foreground_colors[geany_colorizer_ui_get_current_style (ui)]);
+			geany_colorizer_ui_set_current_background_color (ui, background_colors[geany_colorizer_ui_get_current_style (ui)]);
+			geany_colorizer_ui_set_font_bold (ui, fonts_bold[geany_colorizer_ui_get_current_style (ui)]);
+			geany_colorizer_ui_set_font_italic (ui, fonts_italic[geany_colorizer_ui_get_current_style (ui)]);
+			geany_colorizer_ui_set_font_underline (ui, fonts_underline[geany_colorizer_ui_get_current_style (ui)]);
 		}
 	}
 	result = TRUE;
@@ -251,18 +251,18 @@ void on_fg_color_changed (gint new_color) {
 	gboolean _tmp1_ = FALSE;
 	len = scintilla_send_message (sci, (unsigned int) SCI_GETLENGTH, (uptr_t) 0, (sptr_t) 0);
 	if (len > 0) {
-		_tmp1_ = geany_facelift_ui_get_current_style (ui) >= 0;
+		_tmp1_ = geany_colorizer_ui_get_current_style (ui) >= 0;
 	} else {
 		_tmp1_ = FALSE;
 	}
 	if (_tmp1_) {
-		_tmp0_ = geany_facelift_ui_get_current_style (ui) <= 32;
+		_tmp0_ = geany_colorizer_ui_get_current_style (ui) <= 32;
 	} else {
 		_tmp0_ = FALSE;
 	}
 	if (_tmp0_) {
-		foreground_colors[geany_facelift_ui_get_current_style (ui)] = new_color;
-		scintilla_send_message (sci, (unsigned int) SCI_STYLESETFORE, (uptr_t) ((gulong) geany_facelift_ui_get_current_style (ui)), (sptr_t) ((glong) new_color));
+		foreground_colors[geany_colorizer_ui_get_current_style (ui)] = new_color;
+		scintilla_send_message (sci, (unsigned int) SCI_STYLESETFORE, (uptr_t) ((gulong) geany_colorizer_ui_get_current_style (ui)), (sptr_t) ((glong) new_color));
 	}
 }
 
@@ -273,17 +273,17 @@ void on_bg_color_changed (gint new_color) {
 	gboolean _tmp1_ = FALSE;
 	len = scintilla_send_message (sci, (unsigned int) SCI_GETLENGTH, (uptr_t) 0, (sptr_t) 0);
 	if (len > 0) {
-		_tmp1_ = geany_facelift_ui_get_current_style (ui) >= 0;
+		_tmp1_ = geany_colorizer_ui_get_current_style (ui) >= 0;
 	} else {
 		_tmp1_ = FALSE;
 	}
 	if (_tmp1_) {
-		_tmp0_ = geany_facelift_ui_get_current_style (ui) <= 32;
+		_tmp0_ = geany_colorizer_ui_get_current_style (ui) <= 32;
 	} else {
 		_tmp0_ = FALSE;
 	}
 	if (_tmp0_) {
-		if (geany_facelift_ui_get_use_common_background (ui)) {
+		if (geany_colorizer_ui_get_use_common_background (ui)) {
 			{
 				gint i;
 				i = 0;
@@ -304,8 +304,8 @@ void on_bg_color_changed (gint new_color) {
 				}
 			}
 		} else {
-			background_colors[geany_facelift_ui_get_current_style (ui)] = new_color;
-			scintilla_send_message (sci, (unsigned int) SCI_STYLESETBACK, (uptr_t) ((gulong) geany_facelift_ui_get_current_style (ui)), (sptr_t) ((glong) new_color));
+			background_colors[geany_colorizer_ui_get_current_style (ui)] = new_color;
+			scintilla_send_message (sci, (unsigned int) SCI_STYLESETBACK, (uptr_t) ((gulong) geany_colorizer_ui_get_current_style (ui)), (sptr_t) ((glong) new_color));
 		}
 	}
 }
@@ -317,18 +317,18 @@ void on_font_bold_toggled (gboolean font_bold) {
 	gboolean _tmp1_ = FALSE;
 	len = scintilla_send_message (sci, (unsigned int) SCI_GETLENGTH, (uptr_t) 0, (sptr_t) 0);
 	if (len > 0) {
-		_tmp1_ = geany_facelift_ui_get_current_style (ui) >= 0;
+		_tmp1_ = geany_colorizer_ui_get_current_style (ui) >= 0;
 	} else {
 		_tmp1_ = FALSE;
 	}
 	if (_tmp1_) {
-		_tmp0_ = geany_facelift_ui_get_current_style (ui) <= 32;
+		_tmp0_ = geany_colorizer_ui_get_current_style (ui) <= 32;
 	} else {
 		_tmp0_ = FALSE;
 	}
 	if (_tmp0_) {
-		fonts_bold[geany_facelift_ui_get_current_style (ui)] = font_bold;
-		scintilla_send_message (sci, (unsigned int) SCI_STYLESETBOLD, (uptr_t) ((gulong) geany_facelift_ui_get_current_style (ui)), (sptr_t) ((glong) font_bold));
+		fonts_bold[geany_colorizer_ui_get_current_style (ui)] = font_bold;
+		scintilla_send_message (sci, (unsigned int) SCI_STYLESETBOLD, (uptr_t) ((gulong) geany_colorizer_ui_get_current_style (ui)), (sptr_t) ((glong) font_bold));
 	}
 }
 
@@ -339,18 +339,18 @@ void on_font_italic_toggled (gboolean font_italic) {
 	gboolean _tmp1_ = FALSE;
 	len = scintilla_send_message (sci, (unsigned int) SCI_GETLENGTH, (uptr_t) 0, (sptr_t) 0);
 	if (len > 0) {
-		_tmp1_ = geany_facelift_ui_get_current_style (ui) >= 0;
+		_tmp1_ = geany_colorizer_ui_get_current_style (ui) >= 0;
 	} else {
 		_tmp1_ = FALSE;
 	}
 	if (_tmp1_) {
-		_tmp0_ = geany_facelift_ui_get_current_style (ui) <= 32;
+		_tmp0_ = geany_colorizer_ui_get_current_style (ui) <= 32;
 	} else {
 		_tmp0_ = FALSE;
 	}
 	if (_tmp0_) {
-		fonts_italic[geany_facelift_ui_get_current_style (ui)] = font_italic;
-		scintilla_send_message (sci, (unsigned int) SCI_STYLESETITALIC, (uptr_t) ((gulong) geany_facelift_ui_get_current_style (ui)), (sptr_t) ((glong) font_italic));
+		fonts_italic[geany_colorizer_ui_get_current_style (ui)] = font_italic;
+		scintilla_send_message (sci, (unsigned int) SCI_STYLESETITALIC, (uptr_t) ((gulong) geany_colorizer_ui_get_current_style (ui)), (sptr_t) ((glong) font_italic));
 	}
 }
 
@@ -361,18 +361,18 @@ void on_font_underline_toggled (gboolean font_underline) {
 	gboolean _tmp1_ = FALSE;
 	len = scintilla_send_message (sci, (unsigned int) SCI_GETLENGTH, (uptr_t) 0, (sptr_t) 0);
 	if (len > 0) {
-		_tmp1_ = geany_facelift_ui_get_current_style (ui) >= 0;
+		_tmp1_ = geany_colorizer_ui_get_current_style (ui) >= 0;
 	} else {
 		_tmp1_ = FALSE;
 	}
 	if (_tmp1_) {
-		_tmp0_ = geany_facelift_ui_get_current_style (ui) <= 32;
+		_tmp0_ = geany_colorizer_ui_get_current_style (ui) <= 32;
 	} else {
 		_tmp0_ = FALSE;
 	}
 	if (_tmp0_) {
-		fonts_underline[geany_facelift_ui_get_current_style (ui)] = font_underline;
-		scintilla_send_message (sci, (unsigned int) SCI_STYLESETUNDERLINE, (uptr_t) ((gulong) geany_facelift_ui_get_current_style (ui)), (sptr_t) ((glong) font_underline));
+		fonts_underline[geany_colorizer_ui_get_current_style (ui)] = font_underline;
+		scintilla_send_message (sci, (unsigned int) SCI_STYLESETUNDERLINE, (uptr_t) ((gulong) geany_colorizer_ui_get_current_style (ui)), (sptr_t) ((glong) font_underline));
 	}
 }
 
@@ -382,9 +382,9 @@ void on_open_colorizer (void) {
 	if (sci == NULL) {
 		return;
 	}
-	geany_facelift_ui_set_current_lexer (ui, (gint) scintilla_send_message (sci, (unsigned int) SCI_GETLEXER, (uptr_t) 0, (sptr_t) 0));
+	geany_colorizer_ui_set_current_lexer (ui, (gint) scintilla_send_message (sci, (unsigned int) SCI_GETLEXER, (uptr_t) 0, (sptr_t) 0));
 	pos = scintilla_send_message (sci, (unsigned int) SCI_GETCURRENTPOS, (uptr_t) 0, (sptr_t) 0);
-	geany_facelift_ui_set_current_style (ui, (gint) scintilla_send_message (sci, (unsigned int) SCI_GETSTYLEAT, (uptr_t) ((gulong) pos), (sptr_t) 0));
+	geany_colorizer_ui_set_current_style (ui, (gint) scintilla_send_message (sci, (unsigned int) SCI_GETSTYLEAT, (uptr_t) ((gulong) pos), (sptr_t) 0));
 }
 
 
@@ -431,27 +431,27 @@ void on_dialog_response (gint response_id) {
 }
 
 
-static void _on_fg_color_changed_geany_facelift_ui_foreground_color_changed (GeanyFaceliftUI* _sender, gint color, gpointer self) {
+static void _on_fg_color_changed_geany_colorizer_ui_foreground_color_changed (GeanyColorizerUI* _sender, gint color, gpointer self) {
 	on_fg_color_changed (color);
 }
 
 
-static void _on_bg_color_changed_geany_facelift_ui_background_color_changed (GeanyFaceliftUI* _sender, gint color, gpointer self) {
+static void _on_bg_color_changed_geany_colorizer_ui_background_color_changed (GeanyColorizerUI* _sender, gint color, gpointer self) {
 	on_bg_color_changed (color);
 }
 
 
-static void _on_font_bold_toggled_geany_facelift_ui_font_bold_toggled (GeanyFaceliftUI* _sender, gboolean font_bold, gpointer self) {
+static void _on_font_bold_toggled_geany_colorizer_ui_font_bold_toggled (GeanyColorizerUI* _sender, gboolean font_bold, gpointer self) {
 	on_font_bold_toggled (font_bold);
 }
 
 
-static void _on_font_italic_toggled_geany_facelift_ui_font_italic_toggled (GeanyFaceliftUI* _sender, gboolean font_italic, gpointer self) {
+static void _on_font_italic_toggled_geany_colorizer_ui_font_italic_toggled (GeanyColorizerUI* _sender, gboolean font_italic, gpointer self) {
 	on_font_italic_toggled (font_italic);
 }
 
 
-static void _on_font_underline_toggled_geany_facelift_ui_font_underline_toggled (GeanyFaceliftUI* _sender, gboolean font_italic, gpointer self) {
+static void _on_font_underline_toggled_geany_colorizer_ui_font_underline_toggled (GeanyColorizerUI* _sender, gboolean font_italic, gpointer self) {
 	on_font_underline_toggled (font_italic);
 }
 
@@ -480,7 +480,7 @@ static void _on_open_toggled_gtk_check_menu_item_toggled (GtkCheckMenuItem* _sen
 
 void plugin_init (GeanyData* data) {
 	struct GeanyDocument* doc;
-	GeanyFaceliftUI* _tmp0_;
+	GeanyColorizerUI* _tmp0_;
 	GtkComboBox* cb;
 	GtkComboBox* _tmp6_;
 	GtkMenuShell* menu;
@@ -494,12 +494,12 @@ void plugin_init (GeanyData* data) {
 	plugin_signal_connect (geany_plugin, NULL, "document-activate", TRUE, (GCallback) on_current_document_changed, NULL);
 	plugin_signal_connect (geany_plugin, NULL, "document-open", TRUE, (GCallback) on_current_document_changed, NULL);
 	plugin_signal_connect (geany_plugin, NULL, "document-new", TRUE, (GCallback) on_current_document_changed, NULL);
-	ui = (_tmp0_ = g_object_ref_sink (geany_facelift_ui_new ()), _g_object_unref0 (ui), _tmp0_);
-	g_signal_connect (ui, "foreground-color-changed", (GCallback) _on_fg_color_changed_geany_facelift_ui_foreground_color_changed, NULL);
-	g_signal_connect (ui, "background-color-changed", (GCallback) _on_bg_color_changed_geany_facelift_ui_background_color_changed, NULL);
-	g_signal_connect (ui, "font-bold-toggled", (GCallback) _on_font_bold_toggled_geany_facelift_ui_font_bold_toggled, NULL);
-	g_signal_connect (ui, "font-italic-toggled", (GCallback) _on_font_italic_toggled_geany_facelift_ui_font_italic_toggled, NULL);
-	g_signal_connect (ui, "font-underline-toggled", (GCallback) _on_font_underline_toggled_geany_facelift_ui_font_underline_toggled, NULL);
+	ui = (_tmp0_ = g_object_ref_sink (geany_colorizer_ui_new ()), _g_object_unref0 (ui), _tmp0_);
+	g_signal_connect (ui, "foreground-color-changed", (GCallback) _on_fg_color_changed_geany_colorizer_ui_foreground_color_changed, NULL);
+	g_signal_connect (ui, "background-color-changed", (GCallback) _on_bg_color_changed_geany_colorizer_ui_background_color_changed, NULL);
+	g_signal_connect (ui, "font-bold-toggled", (GCallback) _on_font_bold_toggled_geany_colorizer_ui_font_bold_toggled, NULL);
+	g_signal_connect (ui, "font-italic-toggled", (GCallback) _on_font_italic_toggled_geany_colorizer_ui_font_italic_toggled, NULL);
+	g_signal_connect (ui, "font-underline-toggled", (GCallback) _on_font_underline_toggled_geany_colorizer_ui_font_underline_toggled, NULL);
 	if (in_message_window) {
 		GtkScrolledWindow* _tmp1_;
 		GtkNotebook* _tmp2_;
@@ -525,7 +525,7 @@ void plugin_init (GeanyData* data) {
 		gtk_box_pack_start (box, (GtkWidget*) ui, TRUE, TRUE, (guint) 0);
 		_g_object_unref0 (box);
 	}
-	cb = _g_object_ref0 (geany_facelift_ui_get_combo_lexer (ui));
+	cb = _g_object_ref0 (geany_colorizer_ui_get_combo_lexer (ui));
 	{
 		gint i;
 		i = 0;
@@ -544,7 +544,7 @@ void plugin_init (GeanyData* data) {
 			}
 		}
 	}
-	cb = (_tmp6_ = _g_object_ref0 (geany_facelift_ui_get_combo_style (ui)), _g_object_unref0 (cb), _tmp6_);
+	cb = (_tmp6_ = _g_object_ref0 (geany_colorizer_ui_get_combo_style (ui)), _g_object_unref0 (cb), _tmp6_);
 	{
 		gint i;
 		i = 0;
